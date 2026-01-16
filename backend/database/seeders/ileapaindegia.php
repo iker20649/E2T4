@@ -11,6 +11,8 @@ use App\Models\Hitzordua;
 use App\Models\HitzorduZerbitzua;
 use App\Models\KontsumoErregistroa;
 use App\Models\IkasleEkipoa;
+use App\Models\User; // <--- NUEVO: Para crear usuarios de login
+use Illuminate\Support\Facades\Hash; // <--- NUEVO: Para encriptar contraseñas
 
 class ileapaindegia extends Seeder
 {
@@ -48,7 +50,7 @@ class ileapaindegia extends Seeder
             'oharrak' => 'Lehenengo aldiz dator'
         ]);
 
-        // 6. HITZORDU_ZERBITZUAK (Pibot)
+        // 6. HITZORDU_ZERBITZUAK
         HitzorduZerbitzua::create([
             'hitzordu_id' => $h1->id,
             'zerbitzu_id' => $z1->id,
@@ -56,7 +58,7 @@ class ileapaindegia extends Seeder
             'oharrak' => 'Oso pozik'
         ]);
 
-        // 7. KONTSUMO_ERREGISTROAK (Logs de uso)
+        // 7. KONTSUMO_ERREGISTROAK
         KontsumoErregistroa::create([
             'kontsumigarri_id' => $k1->id,
             'erabiltzaile_id' => $p2->id,
@@ -65,13 +67,29 @@ class ileapaindegia extends Seeder
             'oharrak' => 'Kontuz lurrekin'
         ]);
 
-        // 8. IKASLE_EKIPOAK (Uso de máquinas)
+        // 8. IKASLE_EKIPOAK
         IkasleEkipoa::create([
             'profesional_id' => $p2->id,
-            'ekipo_id' => 5, // Adibidez: Secador de casco
+            'ekipo_id' => 5,
             'hasiera_data' => now(),
             'amaiera_data' => now()->addMinutes(30),
             'oharrak' => 'Ekipoa ondo funtzionatzen du'
+        ]);
+
+        // --- DÍA 7: AUTENTICACIÓN Y ROLES ---
+        // 9. USUARIOS DE LOGIN
+        User::create([
+            'name' => 'Admin Irakaslea',
+            'email' => 'admin@admin.com',
+            'password' => Hash::make('12345678'), // Contraseña: 12345678
+            'rola' => 'irakaslea',
+        ]);
+
+        User::create([
+            'name' => 'Ikasle Erabiltzailea',
+            'email' => 'ikasle@ikasle.com',
+            'password' => Hash::make('12345678'), // Contraseña: 12345678
+            'rola' => 'ikaslea',
         ]);
     }
 }
