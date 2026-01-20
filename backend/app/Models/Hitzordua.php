@@ -2,17 +2,24 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Hitzordua extends Model
 {
-    use SoftDeletes;
-    protected $table = 'hitzorduak';
-    protected $guarded = [];
+    use HasFactory;
 
-    // Relación: Una cita pertenece a un cliente
-    public function bezeroa() {
-        return $this->belongsTo(Bezeroa::class, 'bezero_id');
-    }
+    // Nombre real de la tabla en tu DB
+    protected $table = 'hitzorduak';
+
+    // Columnas que permitimos rellenar
+    protected $fillable = [
+        'bezero_id',
+        'profesional_id',
+        'data',
+        'hasiera_ordua',
+        'amaiera_ordua',
+        'iraupena',
+        'oharrak'
+    ];
 }

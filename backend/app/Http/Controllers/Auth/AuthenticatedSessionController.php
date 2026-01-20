@@ -3,36 +3,57 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Auth; // <--- IMPORTANTE
+use Illuminate\Http\JsonResponse;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Handle an incoming authentication request.
      */
-    public function store(LoginRequest $request): Response
+    public function store(Request $request): JsonResponse
     {
-        $request->authenticate();
+        // 1. Validamos los datos que vienen de Vue
+        $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-        $request->session()->regenerate();
+        // 2. Intentamos el login
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'message' => 'Email edo pasahitza okerra.'
+            ], 401);
+        }
 
-        return response()->noContent();
+        // 3. Si el login es correcto, obtenemos al usuario
+        $user = Auth::user();
+
+        // 4. (Opcional) Borramos tokens antiguos para que solo tenga uno activo
+        $user->tokens()->delete();
+
+        // 5. Generamos el nuevo Token de Sanctum
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        // 6. Respondemos a Vue con el Token y los datos del usuario
+        return response()->json([
+            'token' => $token,
+            'user' => $user,
+            'message' => 'Login zuzena!'
+        ]);
     }
 
     /**
      * Destroy an authenticated session.
      */
-    public function destroy(Request $request): Response
+    public function destroy(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
+        // Al hacer Logout, borramos el token actual
+        $request->user()->currentAccessToken()->delete();
 
-        $request->session()->invalidate();
-
-        $request->session()->regenerateToken();
-
-        return response()->noContent();
+        return response()->json([
+            'message' => 'Saioa ondo itxi da.'
+        ]);
     }
 }

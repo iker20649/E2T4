@@ -3,32 +3,51 @@
 namespace App\Http\Controllers;
 
 use App\Models\Hitzordua;
-use App\Models\Zerbitzua; // Importante para saber cuánto dura cada servicio
+use App\Models\Zerbitzua;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class HitzorduaController extends Controller
 {
+    // Listar las citas del usuario logueado
+    public function index(Request $request)
+    {
+        try {
+            // Pillamos el ID del usuario que ha hecho login
+            $userId = $request->user()->id;
+
+            // Buscamos sus citas en la tabla 'hitzorduak' usando 'bezero_id'
+            $hitzorduak = Hitzordua::where('bezero_id', $userId)->get();
+
+            return response()->json($hitzorduak, 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'Errorea datuak lortzean',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Guardar una nueva cita (Tu lógica del Día 8)
     public function store(Request $request)
     {
-        // 1. VALIDACIÓN
         $request->validate([
-            'bezero_id' => 'required|exists:bezeroak,id',
-            'profesional_id' => 'required|exists:profesionalak,id',
-            'zerbitzu_id' => 'required|exists:zerbitzuak,id',
+            'bezero_id' => 'required',
+            'profesional_id' => 'required',
+            'zerbitzu_id' => 'required',
             'data' => 'required|date',
             'hasiera_ordua' => 'required',
         ]);
 
-        // 2. BUSCAR DURACIÓN DEL SERVICIO
         $zerbitzua = Zerbitzua::find($request->zerbitzu_id);
-        $iraupena = $zerbitzua->iraupena; // Sacamos los minutos (ej: 30)
+        if (!$zerbitzua) return response()->json(['message' => 'Zerbitzua ez da aurkitu'], 404);
 
-        // 3. CALCULAR HORARIOS CON CARBON
+        $iraupena = $zerbitzua->iraupena;
         $hasiera = Carbon::parse($request->data . ' ' . $request->hasiera_ordua);
         $amaiera = $hasiera->copy()->addMinutes($iraupena);
 
-        // 4. LÓGICA DE SOLAPAMIENTO (No dos citas a la vez para el mismo alumno)
+        // Lógica de solapamiento
         $solapatuta = Hitzordua::where('profesional_id', $request->profesional_id)
             ->where('data', $request->data)
             ->where(function ($query) use ($hasiera, $amaiera) {
@@ -43,12 +62,9 @@ class HitzorduaController extends Controller
             })->exists();
 
         if ($solapatuta) {
-            return response()->json([
-                'message' => 'Errorea: Profesional honek badu beste hitzordu bat ordu tarte horretan.'
-            ], 422);
+            return response()->json(['message' => 'Profesionala okupatuta dago'], 422);
         }
 
-        // 5. GUARDAR CITA
         $hitzordua = Hitzordua::create([
             'bezero_id' => $request->bezero_id,
             'profesional_id' => $request->profesional_id,
@@ -56,17 +72,9 @@ class HitzorduaController extends Controller
             'hasiera_ordua' => $hasiera->format('H:i:s'),
             'amaiera_ordua' => $amaiera->format('H:i:s'),
             'iraupena' => $iraupena,
+            'oharrak' => $request->oharrak
         ]);
 
-        return response()->json([
-            'message' => 'Hitzordua ondo gorde da!',
-            'data' => $hitzordua
-        ], 201);
-    }
-
-    public function index()
-    {
-        // Devolvemos todas las citas con la información de cliente y profesional
-        return Hitzordua::with(['bezeroa', 'profesionala'])->get();
+        return response()->json($hitzordua, 201);
     }
 }

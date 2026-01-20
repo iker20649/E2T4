@@ -2,9 +2,11 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Importamos los controladores necesarios
 use App\Http\Controllers\HitzorduaController;
 use App\Http\Controllers\UserController;
-// Aquí iréis importando el resto de controladores mañana (BezeroaController, etc.)
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -12,34 +14,27 @@ use App\Http\Controllers\UserController;
 |--------------------------------------------------------------------------
 */
 
-// --- RUTAS PÚBLICAS ---
-// (Las rutas de Login y Registro las gestiona automáticamente routes/auth.php de Breeze)
+// --- 🔓 RUTAS PÚBLICAS ---
+// Esta ruta permite que Vue envíe el email y password para recibir el Token
+Route::post('/login', [AuthenticatedSessionController::class, 'store']);
 
 
-// --- RUTAS PROTEGIDAS (Solo usuarios logueados) ---
-Route::middleware(['auth:sanctum'])->group(function () {
+// --- 🔐 RUTAS PROTEGIDAS (Solo con Bearer Token) ---
+Route::middleware('auth:sanctum')->group(function () {
 
-    // 1. Datos del usuario actual
+    // 1. Obtener los datos del usuario logueado
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // 2. Gestión de Citas (Día 8: Lógica de no solapamiento)
-    Route::post('/hitzorduak', [HitzorduaController::class, 'store']);
+    // 2. Gestión de Citas (Hitzorduak)
+    // El método index debería devolver las citas del usuario: $request->user()->hitzorduak
     Route::get('/hitzorduak', [HitzorduaController::class, 'index']);
-
-    // 3. Rutas de consulta (Cualquier alumno puede ver productos o servicios)
-    // Route::get('/zerbitzuak', [ZerbitzuaController::class, 'index']);
     
-    // --- RUTAS DE ADMINISTRACIÓN (Solo Irakasleak) ---
-    Route::middleware(['rol:irakaslea'])->group(function () {
-        
-        // Ejemplo: Solo el profesor puede borrar citas o gestionar el stock crítico
-        Route::delete('/hitzorduak/{id}', [HitzorduaController::class, 'destroy']);
-        
-        Route::get('/admin/stats', function () {
-            return response()->json(['message' => 'Hemen ikus ditzakezu estatistika guztiak.']);
-        });
+    // Para crear nuevas citas desde el frontend
+    Route::post('/hitzorduak', [HitzorduaController::class, 'store']);
 
-    });
+    // 3. Ruta de Logout (Para invalidar el token al salir)
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+
 });
