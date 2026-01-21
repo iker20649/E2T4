@@ -1,12 +1,12 @@
 <?php
 
 return [
-    // Permitimos todas las rutas de la API
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    // Hemos añadido 'storage/*' a la lista de rutas permitidas
+    'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
 
     'allowed_methods' => ['*'],
 
-    // ¡OJO AQUÍ! Cambiamos el 3000 por el 5173 que es el de vuestro Vue
+    // Asegúrate de que este es el puerto donde corre tu Vue
     'allowed_origins' => ['http://localhost:5173'], 
 
     'allowed_origins_patterns' => [],
