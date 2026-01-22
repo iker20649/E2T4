@@ -9,22 +9,19 @@ class Hitzordua extends Model
 {
     use HasFactory;
 
-    // Nombre de la tabla en la base de datos
     protected $table = 'hitzorduak';
 
-    // Campos que permitimos guardar (¡Añadido finalizatuta!)
     protected $fillable = [
+        'bezeroa',
         'data',
-        'ordua',
-        'bezero_id',
+        'deskribapena',
+        'user_id',
         'finalizatuta'
     ];
 
-    /**
-     * Relación: Una cita pertenece a un usuario (cliente).
-     */
-    public function bezeroa()
+    // Hitzordua erabiltzaile (ikasle) batena da
+    public function user()
     {
-        return $this->belongsTo(User::class, 'bezero_id');
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

@@ -6,28 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
     public function up(): void {
-        // Tabla de Usuarios (Sanctum)
-        Schema::create('users', function (Blueprint $table) {
+        // Produktuen Taula
+        Schema::create('produktuak', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
+            $table->string('izena');
+            $table->string('marka')->nullable();
+            $table->decimal('prezioa', 8, 2)->default(0);
+            $table->integer('stock')->default(0);
+            $table->integer('stock_minimo')->default(5);
             $table->timestamps();
         });
 
-        // Tabla de Citas (Hitzorduak)
+        // Hitzorduen Taula (Hemen 'user_id' erabiltzen dugu ikaslearekin lotzeko)
         Schema::create('hitzorduak', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bezero_id')->constrained('users')->onDelete('cascade');
-            $table->date('data');
-            $table->time('ordua');
-            $table->boolean('finalizatuta')->default(false); // Columna para completado
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->string('bezeroa'); 
+            $table->dateTime('data');  
+            $table->text('deskribapena')->nullable();
+            $table->boolean('finalizatuta')->default(false);
             $table->timestamps();
         });
     }
 
     public function down(): void {
         Schema::dropIfExists('hitzorduak');
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('produktuak');
     }
 };

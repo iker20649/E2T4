@@ -3,54 +3,71 @@
 namespace App\Http\Controllers;
 
 use App\Models\Produktua;
+use App\Models\StockMugimendua;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProduktuaController extends Controller
 {
-    // Listar productos
     public function index()
     {
-        return response()->json(Produktua::all());
+        return Produktua::orderBy('izena', 'asc')->get();
     }
 
-    // Crear producto nuevo
     public function store(Request $request)
     {
-        $validado = $request->validate([
-            'izena' => 'required|string|max:255',
-            'marka' => 'nullable|string|max:255',
-            'stock' => 'required|integer|min:0',
-            'stock_minimo' => 'required|integer|min:0',
-            'prezioa' => 'required|numeric|min:0',
+        $validated = $request->validate([
+            'izena'        => 'required|string|unique:produktuak',
+            'marka'        => 'nullable|string',
+            'stock'        => 'required|integer|min:0',
+            'stock_minimo' => 'nullable|integer|min:0',
+            'prezioa'      => 'required|numeric|min:0',
         ]);
 
-        $produktu = Produktua::create($validado);
+        $produktua = Produktua::create($validated);
 
-        return response()->json([
-            'message' => 'Produktua ondo sortu da!',
-            'producto' => $produktu
-        ], 201);
+        // LOG-a: Produktu berria erregistratu
+        StockMugimendua::create([
+            'user_id'    => Auth::id(),
+            'produktua'  => $produktua->izena,
+            'kantitatea' => $produktua->stock,
+            'ekintza'    => 'Produktu berria sortua (' . $produktua->prezioa . '€)'
+        ]);
+
+        return response()->json($produktua, 201);
     }
 
-    // Actualizar Stock (+ o -)
     public function updateStock(Request $request, $id)
     {
-        $producto = Produktua::findOrFail($id);
+        $request->validate([
+            'kantitatea' => 'required|integer', 
+            'ekintza'    => 'required|string'
+        ]);
 
-        if ($request->action === 'add') {
-            $producto->increment('stock');
-        } elseif ($request->action === 'sub' && $producto->stock > 0) {
-            $producto->decrement('stock');
+        $produktua = Produktua::findOrFail($id);
+        $produktua->stock += $request->kantitatea;
+        
+        if ($produktua->stock < 0) {
+            $produktua->stock = 0;
         }
+        
+        $produktua->save();
 
-        return response()->json($producto);
+        // LOG-a: Mugimendua erregistratu
+        StockMugimendua::create([
+            'user_id'    => Auth::id(),
+            'produktua'  => $produktua->izena,
+            'kantitatea' => $request->kantitatea,
+            'ekintza'    => $request->ekintza
+        ]);
+
+        return response()->json($produktua);
     }
 
-    // Borrar producto
     public function destroy($id)
     {
-        $producto = Produktua::findOrFail($id);
-        $producto->delete();
-        return response()->json(['message' => 'Produktua ezabatu da']);
+        $produktua = Produktua::findOrFail($id);
+        $produktua->delete();
+        return response()->json(['message' => 'Produktua ezabatuta']);
     }
 }

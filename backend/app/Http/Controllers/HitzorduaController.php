@@ -1,41 +1,49 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Hitzordua;
-use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
 
-class HitzorduaController extends Controller {
-    public function index() {
-        return response()->json(Hitzordua::orderBy('data', 'asc')->orderBy('ordua', 'asc')->get());
-    }
+class HitzorduaController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
 
-    public function store(Request $request) {
-        $request->validate(['data' => 'required', 'ordua' => 'required']);
-        $id = $request->bezero_id;
-
-        if (!$id && $request->izena) {
-            $u = User::create([
-                'name' => $request->izena,
-                'email' => Str::slug($request->izena).rand(10,99)."@ilea.app",
-                'password' => Hash::make('12345678')
-            ]);
-            $id = $u->id;
+        if ($user->rola === 'irakasle') {
+            // Irakasleak hitzordu guztiak ikusten ditu, ikaslearen datuekin
+            return Hitzordua::with('user:id,name')->orderBy('data', 'asc')->get();
         }
 
-        return Hitzordua::create(['data'=>$request->data, 'ordua'=>$request->ordua, 'bezero_id'=>$id]);
+        // Ikasleak bereak bakarrik
+        return Hitzordua::where('user_id', $user->id)->orderBy('data', 'asc')->get();
     }
 
-    public function update(Request $request, $id) {
-        $h = Hitzordua::findOrFail($id);
-        $h->update($request->only(['data', 'ordua', 'bezero_id', 'finalizatuta']));
-        return $h;
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'bezeroa' => 'required|string|max:255',
+            'data' => 'required|date',
+            'deskribapena' => 'nullable|string',
+        ]);
+
+        $hitzordua = Hitzordua::create([
+            'bezeroa' => $validated['bezeroa'],
+            'data' => $validated['data'],
+            'deskribapena' => $validated['deskribapena'] ?? '',
+            'user_id' => Auth::id(), // Saioa hasi duenaren IDa gordetzen da
+            'finalizatuta' => false
+        ]);
+
+        return response()->json($hitzordua, 201);
     }
 
-    public function destroy($id) {
-        Hitzordua::findOrFail($id)->delete();
-        return response()->json(['msg' => 'ok']);
+    public function destroy($id)
+    {
+        $hitzordua = Hitzordua::findOrFail($id);
+        $hitzordua->delete();
+        return response()->json(['message' => 'Hitzordua ezabatuta']);
     }
 }
