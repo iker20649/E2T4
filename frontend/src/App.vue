@@ -61,7 +61,9 @@ const logout = () => {
               
               <template v-if="isLoggedIn">
                 <RouterLink to="/hitzorduak" class="nav-link">Hitzorduak</RouterLink>
+                <RouterLink to="/bezeroak" class="nav-link text-indigo-300">👥 Bezeroak</RouterLink>
                 <RouterLink to="/stock" class="nav-link">📦 Stocka</RouterLink>
+                
                 <RouterLink v-if="user?.rola === 'irakasle'" to="/admin/ikasleak" 
                             class="bg-indigo-600/40 hover:bg-indigo-600 px-4 py-2 rounded-xl font-black border border-indigo-400/50 transition-all text-xs uppercase tracking-widest">
                   🎓 KUDEAKETA
