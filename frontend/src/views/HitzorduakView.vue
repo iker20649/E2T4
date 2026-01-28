@@ -2,9 +2,12 @@
 import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
-// Konfigurazioa
-axios.defaults.baseURL = 'http://127.0.0.1:8000/api/'
-
+// Configuración de Axios para usar la sesión (Puerto 80 por defecto)
+const token = localStorage.getItem('token');
+if (token) {
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+axios.defaults.baseURL = 'http://127.0.0.1';
 const hitzorduak = ref([])
 const ikasleak = ref([]) 
 const user = ref(null)
@@ -14,20 +17,19 @@ const ikasleIragazkia = ref('')
 
 const kargatuDatuak = async () => {
   kargatzen.value = true
-  const token = localStorage.getItem('token')
-  if (!token) return
-
   try {
+    // CAMBIO: Eliminamos localStorage y usamos rutas con el prefijo /api/
     const [resUser, resHitz] = await Promise.all([
-      axios.get('user', { headers: { Authorization: `Bearer ${token}` } }),
-      axios.get('hitzorduak', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get('/api/user'),
+      axios.get('/api/hitzorduak')
     ])
     
     user.value = resUser.data
     hitzorduak.value = resHitz.data
 
+    // Si es irakasle, cargamos la lista de alumnos para el filtro
     if (user.value.rola && user.value.rola.toLowerCase().includes('irakasle')) {
-      const resIkas = await axios.get('admin/ikasleak', { headers: { Authorization: `Bearer ${token}` } })
+      const resIkas = await axios.get('/api/admin/ikasleak')
       ikasleak.value = resIkas.data
     }
   } catch (e) {
@@ -49,10 +51,8 @@ const gordeHitzordua = async () => {
   }
 
   try {
-    const token = localStorage.getItem('token')
-    await axios.post('hitzorduak', berria.value, { 
-      headers: { Authorization: `Bearer ${token}` } 
-    })
+    // CAMBIO: Petición POST simplificada sin headers manuales
+    await axios.post('/api/hitzorduak', berria.value)
     
     alert("✅ Hitzordua ondo gorde da!")
     berria.value = { bezeroa: '', data: '', deskribapena: '' }
@@ -64,9 +64,9 @@ const gordeHitzordua = async () => {
 
 const ezabatu = async (id) => {
   if (!confirm("Ziur zaude?")) return
-  const token = localStorage.getItem('token')
   try {
-    await axios.delete(`hitzorduak/${id}`, { headers: { Authorization: `Bearer ${token}` } })
+    // CAMBIO: Ruta DELETE actualizada
+    await axios.delete(`/api/hitzorduak/${id}`)
     await kargatuDatuak()
   } catch (e) {
     console.error("Errorea ezabatzean:", e)
@@ -85,9 +85,9 @@ onMounted(kargatuDatuak)
 </script>
 
 <template>
-  <div v-if="!kargatzen" class="max-w-7xl mx-auto space-y-12 animate-fade-in pb-20">
+  <div v-if="!kargatzen" class="max-w-7xl mx-auto space-y-12 animate-fade-in pb-20 pt-10 px-4">
     
-    <header class="bg-white p-12 rounded-[4rem] shadow-xl border-b-[12px] border-indigo-600 flex justify-between items-center relative overflow-hidden">
+    <header class="bg-white p-12 rounded-[3.5rem] shadow-xl border-b-[12px] border-indigo-600 flex justify-between items-center relative overflow-hidden">
       <div class="relative z-10">
         <h1 class="text-6xl font-black italic uppercase tracking-tighter text-indigo-950 leading-none">
           Agenda <span class="text-indigo-600">Zentroa</span>
@@ -99,7 +99,7 @@ onMounted(kargatuDatuak)
           {{ user.rola }} modua
         </span>
       </div>
-      <div class="absolute right-[-2rem] top-1/2 -translate-y-1/2 text-[12rem] opacity-[0.03] font-black italic select-none">AGENDA</div>
+      <div class="absolute right-[-2rem] top-1/2 -translate-y-1/2 text-[12rem] opacity-[0.03] font-black italic select-none pointer-events-none">AGENDA</div>
     </header>
 
     <section v-if="user?.rola?.toLowerCase().includes('irakasle')" 
@@ -122,7 +122,7 @@ onMounted(kargatuDatuak)
     </section>
 
     <section v-if="user?.rola?.toLowerCase().includes('ikasle') && !user?.rola?.toLowerCase().includes('irakasle')" 
-             class="bg-slate-900 p-12 rounded-[4rem] shadow-2xl relative overflow-hidden text-white">
+             class="bg-slate-900 p-12 rounded-[4rem] shadow-2xl relative overflow-hidden text-white border-b-8 border-indigo-500">
       <h2 class="text-4xl font-black mb-10 italic uppercase flex items-center gap-4 relative z-10">
         <span class="bg-indigo-500 p-3 rounded-2xl">➕</span> Hitzordu Berria
       </h2>
@@ -144,10 +144,10 @@ onMounted(kargatuDatuak)
         </div>
         <button @click="gordeHitzordua" 
                 class="md:col-span-2 bg-indigo-500 hover:bg-indigo-400 text-white font-black py-6 rounded-[2rem] transition-all shadow-[0_0_30px_rgba(99,102,241,0.3)] uppercase tracking-widest active:scale-95">
-          Gorde Hitzordua Sistema Nagusian
+          Gorde Hitzordua Sistema Nagusian 🚀
         </button>
       </div>
-      <div class="absolute -right-10 -bottom-10 text-[12rem] text-white/5 font-black italic select-none">BERRIA</div>
+      <div class="absolute -right-10 -bottom-10 text-[12rem] text-white/5 font-black italic select-none pointer-events-none">BERRIA</div>
     </section>
 
     <section class="bg-white rounded-[4rem] shadow-2xl overflow-hidden border border-indigo-50">
@@ -205,14 +205,3 @@ onMounted(kargatuDatuak)
     <p class="text-indigo-900 font-black uppercase italic tracking-[0.3em] animate-pulse">Agendak kargatzen...</p>
   </div>
 </template>
-
-<style scoped>
-.animate-fade-in { animation: fadeIn 0.8s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-</style>

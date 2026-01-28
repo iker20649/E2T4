@@ -2,9 +2,13 @@
 import { RouterLink, RouterView, useRouter, useRoute } from 'vue-router'
 import { ref, onMounted, watch } from 'vue'
 import axios from 'axios'
-
-// Irudia inportatzeko modu seguruagoa
 import logoImg from '@/assets/logoa.png'
+import './assets/main.css' 
+
+// --- CONFIGURACIÓN GLOBAL DE AXIOS ---
+axios.defaults.baseURL = 'http://127.0.0.1'; 
+axios.defaults.withCredentials = false; 
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 const router = useRouter()
 const route = useRoute()
@@ -13,125 +17,120 @@ const user = ref(null)
 
 const checkLogin = async () => {
   const token = localStorage.getItem('token')
-  isLoggedIn.value = !!token
-  if (token && !user.value) {
-    try {
-      const res = await axios.get('user', { headers: { Authorization: `Bearer ${token}` } })
-      user.value = res.data
-    } catch (error) { logout() }
-  } else if (!token) { user.value = null }
+  if (!token) {
+    isLoggedIn.value = false
+    user.value = null
+    return
+  }
+
+  isLoggedIn.value = true
+
+  try {
+    const res = await axios.get('/api/user', {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    user.value = res.data
+  } catch (error) {
+    if (error.response && error.response.status === 401) {
+      localStorage.clear()
+      isLoggedIn.value = false
+      user.value = null
+      if (route.path !== '/login') router.push('/login')
+    }
+  }
 }
 
 onMounted(checkLogin)
-watch(() => route.path, checkLogin)
 
-const logout = () => {
-  localStorage.removeItem('token')
-  isLoggedIn.value = false
-  user.value = null
-  router.push('/login')
+watch(() => route.path, (newPath) => {
+  if (newPath !== '/login') checkLogin()
+})
+
+const logout = async () => {
+  const token = localStorage.getItem('token')
+  try {
+    await axios.post('/api/logout', {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+  } catch (error) {
+    console.error("Errorea logout egitean", error)
+  } finally {
+    localStorage.clear()
+    isLoggedIn.value = false
+    user.value = null
+    router.push('/login')
+  }
 }
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-[#f1f5f9] text-slate-900 font-sans">
+  <div class="min-h-screen w-full bg-[#f1f5f9]" style="background-color: #f1f5f9; min-height: 100vh;">
     
-    <nav class="bg-[#1e1b4b] text-white shadow-2xl relative z-50 border-b-4 border-indigo-500 transition-all duration-500">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-24 items-center">
-          
-          <div class="flex items-center space-x-10">
-            <RouterLink to="/" class="flex items-center gap-4 group transition-all">
-              <div class="relative flex items-center">
-                <div class="absolute -inset-2 bg-indigo-500 rounded-full blur-md opacity-0 group-hover:opacity-25 transition duration-500"></div>
-                <img 
-                  :src="logoImg" 
-                  alt="Ilea.App Logo" 
-                  class="relative h-16 w-auto object-contain rounded-2xl drop-shadow-2xl transform group-hover:scale-105 transition duration-300"
-                >
-              </div>
-              
-              <h1 class="text-2xl font-black tracking-tighter italic uppercase hidden sm:block leading-none">
-                Ilea<span class="text-indigo-500">.</span>App
-              </h1>
-            </RouterLink>
-            
-            <div v-if="route.path !== '/login'" class="hidden md:flex items-center space-x-6">
-              <RouterLink to="/" class="nav-link">Hasiera</RouterLink>
-              
-              <template v-if="isLoggedIn">
-                <RouterLink to="/hitzorduak" class="nav-link">Hitzorduak</RouterLink>
-                <RouterLink to="/bezeroak" class="nav-link text-indigo-300">👥 Bezeroak</RouterLink>
-                <RouterLink to="/stock" class="nav-link">📦 Stocka</RouterLink>
-                
-                <RouterLink v-if="user?.rola === 'irakasle'" to="/admin/ikasleak" 
-                            class="bg-indigo-600/40 hover:bg-indigo-600 px-4 py-2 rounded-xl font-black border border-indigo-400/50 transition-all text-xs uppercase tracking-widest">
-                  🎓 KUDEAKETA
-                </RouterLink>
-              </template>
-            </div>
-          </div>
+    <nav v-if="route.path !== '/login' && isLoggedIn" 
+         style="background-color: #1e1b4b !important; color: white !important; display: block; width: 100%; border-bottom: 4px solid #6366f1; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+      
+      <div class="max-w-7xl mx-auto px-4 h-24 flex justify-between items-center" 
+           style="max-width: 1280px; margin: 0 auto; height: 96px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+        
+        <div class="flex items-center space-x-10" style="display: flex; align-items: center; gap: 40px;">
+          <RouterLink to="/hitzorduak" style="display: flex; align-items: center; gap: 15px; text-decoration: none;">
+            <img :src="logoImg" style="height: 60px; border-radius: 15px; display: block;">
+            <h1 style="color: white; font-size: 24px; font-weight: 900; margin: 0; font-style: italic; text-transform: uppercase;">
+              Ilea<span style="color: #6366f1;">.</span>App
+            </h1>
+          </RouterLink>
 
-          <div class="flex items-center space-x-4">
-            <template v-if="isLoggedIn">
-              <RouterLink to="/perfila" class="flex items-center gap-3 bg-white/5 hover:bg-white/10 p-2 pr-5 rounded-3xl border border-white/10 transition-all group">
-                <img :src="'https://ui-avatars.com/api/?background=6366f1&color=fff&name=' + user?.name" 
-                     class="w-10 h-10 rounded-full border-2 border-indigo-400 group-hover:scale-110 transition-transform">
-                <div class="flex flex-col text-left">
-                  <span class="text-[9px] font-black uppercase text-indigo-300 leading-none">{{ user?.rola }}</span>
-                  <span class="text-sm font-bold leading-tight">{{ user?.name.split(' ')[0] }}</span>
-                </div>
-              </RouterLink>
-              
-              <button @click="logout" class="bg-rose-600 hover:bg-rose-500 px-6 py-2.5 rounded-2xl text-[10px] font-black shadow-lg transition-all active:scale-95 uppercase tracking-widest border-b-4 border-rose-800">
-                LOG OUT
-              </button>
-            </template>
+          <div class="hidden md:flex" style="display: flex; gap: 25px; align-items: center;">
+            <RouterLink to="/hitzorduak" class="nav-link">Hitzorduak</RouterLink>
+            <RouterLink to="/bezeroak" class="nav-link">Bezeroak</RouterLink>
+            <RouterLink to="/stock" class="nav-link">Stocka</RouterLink>
             
-            <template v-else-if="route.path !== '/login'">
-              <RouterLink to="/login" class="bg-indigo-600 hover:bg-indigo-500 px-8 py-3 rounded-2xl text-xs font-black shadow-xl transition-all uppercase tracking-widest border-b-4 border-indigo-800">
-                Sartu ⚡
+            <template v-if="user?.rola === 'irakasle'">
+              <div style="width: 2px; height: 24px; background-color: rgba(99, 102, 241, 0.3);"></div>
+              <RouterLink to="/admin" 
+                style="background-color: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.5); text-decoration: none; font-weight: bold;">
+                Ikasleen Kontrola & Log
               </RouterLink>
             </template>
           </div>
-
         </div>
+
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div style="text-align: right;">
+            <p style="color: #818cf8; font-size: 10px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
+              {{ user?.rola || 'Kargatzen...' }}
+            </p>
+            <p style="color: white; font-size: 14px; font-weight: bold; margin: 0;">{{ user?.name }}</p>
+          </div>
+          <button @click="logout" 
+            style="background-color: #e11d48; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 900; border: none; border-bottom: 4px solid #9f1239; cursor: pointer; font-size: 10px;">
+            LOG OUT
+          </button>
+        </div>
+
       </div>
     </nav>
 
-    <main class="w-full">
-      <div class="max-w-7xl mx-auto py-12 px-6">
-        <RouterView />
-      </div>
+    <main :class="route.path === '/login' ? '' : 'max-w-7xl mx-auto py-12 px-6'" 
+          style="max-width: 1280px; margin: 0 auto; padding: 40px 20px;">
+      <RouterView />
     </main>
+
   </div>
 </template>
 
-<style>
-body { 
-  margin: 0; 
-  background-color: #f1f5f9; 
-}
-
+<style scoped>
 .nav-link {
-  font-weight: 700;
-  color: #94a3b8;
-  transition: all 0.3s;
-  font-size: 0.9rem;
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 14px;
+  transition: color 0.3s;
 }
-
 .nav-link:hover {
-  color: white;
+  color: #818cf8;
 }
-
-/* Garbiagoa: Aktibo dagoen linkaren estiloa */
-.router-link-active:not(.group) { 
-  color: white;
-  border-bottom: 3px solid #6366f1; 
-}
-
-/* Kudeaketa botoiarentzat distira berezia kentzeko aktibo dagoenean */
-.bg-indigo-600\/40.router-link-active {
-  border-bottom: none;
+.router-link-active {
+  color: #6366f1 !important;
 }
 </style>

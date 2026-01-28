@@ -7,12 +7,16 @@ const password = ref('')
 const password_confirmation = ref('')
 const fitxategia = ref(null)
 
-const API_URL = 'http://localhost:8000'
+// 1. CORRECCIÓN: Usamos el puerto 80 (baseURL ya configurada en App.vue)
+const API_URL = 'http://127.0.0.1' 
+
+// Configuración global para esta vista
+axios.defaults.withCredentials = true;
 
 const kargatu = async () => {
-  const token = localStorage.getItem('token')
   try {
-    const res = await axios.get('user', { headers: { Authorization: `Bearer ${token}` } })
+    // 2. CORRECCIÓN: Sin token Bearer y con ruta absoluta /api/
+    const res = await axios.get('/api/user')
     user.value = res.data
   } catch (e) {
     console.error("Errorea kargatzean", e)
@@ -20,7 +24,6 @@ const kargatu = async () => {
 }
 
 const gorde = async () => {
-  const token = localStorage.getItem('token')
   const fd = new FormData()
   
   fd.append('name', user.value.name)
@@ -36,20 +39,25 @@ const gorde = async () => {
   }
 
   try {
-    const res = await axios.post('profile/update', fd, {
+    // 3. CORRECCIÓN: Ruta /api/profile/update y sin el header Authorization
+    const res = await axios.post('/api/profile/update', fd, {
       headers: { 
-        'Content-Type': 'multipart/form-data', 
-        Authorization: `Bearer ${token}` 
+        'Content-Type': 'multipart/form-data'
       }
     })
     
     alert("✅ Datuak ondo gorde dira!")
-    user.value = res.data.user
+    // Actualizamos los datos con la respuesta
+    if (res.data.user) {
+        user.value = res.data.user
+    }
+    
     password.value = ''
     password_confirmation.value = ''
     fitxategia.value = null
     await kargatu()
   } catch (e) {
+    console.error(e)
     alert("Errorea gordetzean")
   }
 }
@@ -58,7 +66,7 @@ onMounted(kargatu)
 </script>
 
 <template>
-  <div class="max-w-5xl mx-auto space-y-8 animate-fade-in pb-20">
+  <div class="max-w-5xl mx-auto space-y-8 animate-fade-in pb-20 pt-10 px-4">
     
     <header class="relative overflow-hidden rounded-[3.5rem] shadow-2xl border-b-[12px] border-indigo-500 bg-[#1e1b4b]">
       <div class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-indigo-500/10 to-transparent"></div>
@@ -79,16 +87,12 @@ onMounted(kargatu)
             {{ user.rola }} modua
           </div>
           <h1 class="text-6xl md:text-7xl font-black italic tracking-tighter uppercase leading-none">
-            {{ user.name.split(' ')[0] }}<span class="text-indigo-500">.</span>
+            {{ user.name ? user.name.split(' ')[0] : 'Erabiltzailea' }}<span class="text-indigo-500">.</span>
           </h1>
           <p class="mt-4 text-indigo-200/50 font-medium italic text-lg max-w-sm leading-relaxed">
             Zure profilaren ezarpenak kudeatu eta segurtasuna bermatu.
           </p>
         </div>
-      </div>
-
-      <div class="absolute right-[-2rem] top-1/2 -translate-y-1/2 text-[15rem] text-white/[0.03] font-black italic select-none leading-none pointer-events-none uppercase">
-        Perfil
       </div>
     </header>
 
@@ -99,12 +103,10 @@ onMounted(kargatu)
           <h3 class="text-2xl font-black uppercase italic text-slate-800 flex items-center gap-4">
             <span class="w-10 h-2 bg-indigo-600 rounded-full block"></span> Datuak
           </h3>
-          
           <div class="space-y-2">
             <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-4">Erabiltzaile Izena</label>
             <input v-model="user.name" type="text" class="w-full p-6 bg-indigo-50/50 border-2 border-transparent rounded-[2.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-700 shadow-inner">
           </div>
-
           <div class="space-y-2">
             <label class="text-[10px] font-black text-indigo-400 uppercase tracking-widest ml-4">Posta Elektronikoa</label>
             <input v-model="user.email" type="email" class="w-full p-6 bg-indigo-50/50 border-2 border-transparent rounded-[2.5rem] focus:border-indigo-500 focus:bg-white outline-none transition-all font-bold text-slate-700 shadow-inner">
@@ -115,12 +117,10 @@ onMounted(kargatu)
           <h3 class="text-2xl font-black uppercase italic text-slate-800 flex items-center gap-4">
             <span class="w-10 h-2 bg-rose-500 rounded-full block"></span> Segurtasuna
           </h3>
-          
           <div class="space-y-2">
             <label class="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-4">Pasahitz Berria</label>
             <input v-model="password" type="password" placeholder="••••••••" class="w-full p-6 bg-rose-50/30 border-2 border-transparent rounded-[2.5rem] focus:border-rose-500 focus:bg-white outline-none transition-all font-bold text-slate-700 shadow-inner">
           </div>
-
           <div class="space-y-2">
             <label class="text-[10px] font-black text-rose-400 uppercase tracking-widest ml-4">Errepikatu</label>
             <input v-model="password_confirmation" type="password" placeholder="••••••••" class="w-full p-6 bg-rose-50/30 border-2 border-transparent rounded-[2.5rem] focus:border-rose-500 focus:bg-white outline-none transition-all font-bold text-slate-700 shadow-inner">
@@ -152,9 +152,3 @@ onMounted(kargatu)
     </div>
   </div>
 </template>
-
-<style scoped>
-.animate-fade-in { animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 100px white inset !important; }
-</style>

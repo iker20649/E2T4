@@ -1,21 +1,24 @@
 import { createApp } from 'vue'
-import { createPinia } from 'pinia'
 import axios from 'axios'
 import App from './App.vue'
 import router from './router'
-import './assets/main.css'
+import './assets/main.css' // <--- ¡ESTA LÍNEA ES CLAVE! Debe importar tu CSS con Tailwind
 
-// Configuración global de Axios
-axios.defaults.baseURL = 'http://localhost:8000/api/'
-axios.defaults.withCredentials = true
 
-// Si el usuario ya estaba logueado, recuperamos el token para todas las peticiones
-const token = localStorage.getItem('token')
+axios.defaults.baseURL = 'http://127.0.0.1';
+
+// CRÍTICO: withCredentials debe ser FALSE para evitar el error 419
+axios.defaults.withCredentials = false;
+
+// Cargar token si el usuario refresca el navegador
+const token = localStorage.getItem('token');
 if (token) {
-  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
 const app = createApp(App)
-app.use(createPinia())
 app.use(router)
 app.mount('#app')
+
+
+
