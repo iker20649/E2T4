@@ -2,11 +2,13 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
+// Importaciones de tus controladores
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\BezeroaController;
 use App\Http\Controllers\HitzorduaController;
 use App\Http\Controllers\ProduktuaController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BezeroaController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
 /*
@@ -15,37 +17,39 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 |--------------------------------------------------------------------------
 */
 
-// Publikoa: Login-a
+// --- RUTAS PÚBLICAS ---
 Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+// Nueva ruta para que Vue pueda registrar alumnos
+Route::post('/register', [AdminController::class, 'storeIkaslea']); 
 
-// Babestutako Route-ak (Tokena behar da)
+// --- RUTAS PROTEGIDAS (Sanctum) ---
 Route::middleware('auth:sanctum')->group(function () {
     
-    // 1. ERABILTZAILEA ETA PROFILA
-    Route::get('/user', function (Request $request) { return $request->user(); });
-    Route::post('/profile/update', [ProfileController::class, 'update']); 
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-    // 2. HITZORDUAK (Eguneroko lana)
-    // apiResource-k automatikoki sortzen ditu: index, store, show, update eta DESTROY
+    Route::post('/profile/update', [ProfileController::class, 'update']);
     Route::apiResource('hitzorduak', HitzorduaController::class);
 
-    // 3. STOCKA (Produktuen kudeaketa)
+    // Produktuak (Stock)
     Route::get('/produktuak', [ProduktuaController::class, 'index']);
     Route::post('/produktuak', [ProduktuaController::class, 'store']);
     Route::patch('/produktuak/{id}/stock', [ProduktuaController::class, 'updateStock']);
     Route::delete('/produktuak/{id}', [ProduktuaController::class, 'destroy']);
 
-    // 4. BEZEROAK (Josebaren atala)
+    // Bezeroak (Clientes)
     Route::get('/bezeroak', [BezeroaController::class, 'index']);
     Route::post('/bezeroak', [BezeroaController::class, 'store']);
     Route::put('/bezeroak/{id}', [BezeroaController::class, 'update']);
-    Route::delete('/bezeroak/{id}', [BezeroaController::class, 'destroy']); // <--- HAU GEHITUTA
+    Route::delete('/bezeroak/{id}', [BezeroaController::class, 'destroy']);
 
-    // 5. ADMINISTRAZIOA (Irakasleentzako soilik)
-    Route::get('admin/ikasleak', [AdminController::class, 'getIkasleak']);
-    Route::delete('admin/ikasleak/{id}', [AdminController::class, 'destroyIkaslea']);
-    Route::get('admin/stock-historiala', [AdminController::class, 'getStockHistoriala']);
-    
-    // Logout-a
+    // Admin Panel
+    Route::prefix('admin')->group(function () {
+        Route::get('/ikasleak', [AdminController::class, 'getIkasleak']);
+        Route::delete('/ikasleak/{id}', [AdminController::class, 'destroyIkaslea']);
+        Route::get('/stock-historiala', [AdminController::class, 'getStockHistoriala']);
+    });
+
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
 });

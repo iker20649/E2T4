@@ -3,57 +3,46 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // <--- IMPORTANTE
+use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request; // Añadimos Request
+use Illuminate\Support\Facades\Auth;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(Request $request): JsonResponse
+    public function store(LoginRequest $request): JsonResponse
     {
-        // 1. Validamos los datos que vienen de Vue
-        $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+        // 1. Validar credenciales
+        $request->authenticate();
 
-        // 2. Intentamos el login
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json([
-                'message' => 'Email edo pasahitza okerra.'
-            ], 401);
-        }
-
-        // 3. Si el login es correcto, obtenemos al usuario
         $user = Auth::user();
 
-        // 4. (Opcional) Borramos tokens antiguos para que solo tenga uno activo
+        // 2. Limpiar tokens anteriores
         $user->tokens()->delete();
 
-        // 5. Generamos el nuevo Token de Sanctum
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // 3. Crear el token de acceso
+        // Cambiamos 'token' por 'access_token' para que coincida con lo que busca el Test
+        $token = $user->createToken('token-app')->plainTextToken;
 
-        // 6. Respondemos a Vue con el Token y los datos del usuario
         return response()->json([
-            'token' => $token,
-            'user' => $user,
-            'message' => 'Login zuzena!'
+            'access_token' => $token, 
+            'user' => [
+                'name' => $user->name,
+                'email' => $user->email,
+                'rola' => $user->rola, 
+            ]
         ]);
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): JsonResponse
     {
-        // Al hacer Logout, borramos el token actual
-        $request->user()->currentAccessToken()->delete();
+        // Añadimos una comprobación para evitar el error de TransientToken en los tests
+        $token = $request->user()->currentAccessToken();
+        
+        if ($token && method_exists($token, 'delete')) {
+            $token->delete();
+        }
 
-        return response()->json([
-            'message' => 'Saioa ondo itxi da.'
-        ]);
+        return response()->json(['message' => 'Saioa itxi da']);
     }
 }

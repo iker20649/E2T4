@@ -1,21 +1,21 @@
 <?php
 
 return [
-    // Hemos añadido 'storage/*' a la lista de rutas permitidas
-    'paths' => ['api/*', 'sanctum/csrf-cookie', 'storage/*'],
+   // config/cors.php
 
-    'allowed_methods' => ['*'],
+'paths' => ['api/*', 'register', 'login', 'logout', 'sanctum/csrf-cookie'],
 
-    // Asegúrate de que este es el puerto donde corre tu Vue
-    'allowed_origins' => ['http://localhost:5173'], 
+'allowed_methods' => ['*'],
 
-    'allowed_origins_patterns' => [],
+'allowed_origins' => ['http://localhost:5173'], // <--- AQUÍ tu URL de Vue
 
-    'allowed_headers' => ['*'],
+'allowed_origins_patterns' => [],
 
-    'exposed_headers' => [],
+'allowed_headers' => ['*'],
 
-    'max_age' => 0,
+'exposed_headers' => [],
 
-    'supports_credentials' => true,
+'max_age' => 0,
+
+'supports_credentials' => true, // <--- IMPORTANTE ponerlo en true
 ];

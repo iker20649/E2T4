@@ -12,7 +12,8 @@ class BezeroaController extends Controller
     {
         $user = $request->user();
 
-        if ($user->rola === 'irakasle') {
+        // Evitamos errores si el usuario no tiene rol definido
+        if ($user && $user->rola === 'irakasle') {
             return Bezeroa::with('user')
                 ->get()
                 ->groupBy(function($bezero) {
@@ -34,15 +35,16 @@ class BezeroaController extends Controller
             'deskribapena' => 'nullable|string',
         ]);
 
-        $bezeroa = Bezeroa::create([
-            'izena' => $validated['izena'],
-            'abizenak' => $validated['abizenak'] ?? '',
-            'telefonoa' => $validated['telefonoa'],
-            'deskribapena' => $validated['deskribapena'],
-            'user_id' => Auth::id(),
-            'bisita_kopurua' => 1,
-            'azken_bisita' => now(),
-        ]);
+        // Usar 'new' y 'save' es más seguro que 'create' si el modelo no tiene $fillable
+        $bezeroa = new Bezeroa();
+        $bezeroa->izena = $validated['izena'];
+        $bezeroa->abizenak = $validated['abizenak'] ?? '';
+        $bezeroa->telefonoa = $validated['telefonoa'] ?? null;
+        $bezeroa->deskribapena = $validated['deskribapena'] ?? null;
+        $bezeroa->user_id = Auth::id();
+        $bezeroa->bisita_kopurua = 1;
+        $bezeroa->azken_bisita = now();
+        $bezeroa->save();
 
         return response()->json($bezeroa, 201);
     }
@@ -52,7 +54,7 @@ class BezeroaController extends Controller
         $bezeroa = Bezeroa::findOrFail($id);
         
         $validated = $request->validate([
-            'izena' => 'string|max:255',
+            'izena' => 'sometimes|string|max:255',
             'abizenak' => 'nullable|string|max:255',
             'telefonoa' => 'nullable|string',
             'deskribapena' => 'nullable|string',
@@ -62,7 +64,6 @@ class BezeroaController extends Controller
         return response()->json($bezeroa);
     }
 
-    // HAU DA FALTA ZENA: Ezabatzeko funtzioa
     public function destroy($id)
     {
         try {

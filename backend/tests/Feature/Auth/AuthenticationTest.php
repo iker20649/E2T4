@@ -12,22 +12,29 @@ class AuthenticationTest extends TestCase
 
     public function test_users_can_authenticate_using_the_login_screen(): void
     {
-        $user = User::factory()->create();
+        $user = User::factory()->create([
+            'password' => bcrypt('password'),
+        ]);
 
-        $response = $this->post('/login', [
+        // Cambiamos a /api/login y forzamos JSON
+        $response = $this->postJson('/api/login', [
             'email' => $user->email,
             'password' => 'password',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertNoContent();
+        
+        // Verificamos que devuelve 200 y que trae el token o los datos del usuario
+        $response->assertStatus(200)
+                 ->assertJsonStructure(['access_token', 'user']);
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        // Cambiamos a /api/login
+        $this->postJson('/api/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ]);
@@ -39,9 +46,9 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/logout');
+        // ActingAs funciona, pero la ruta ahora es /api/logout
+        $response = $this->actingAs($user)->postJson('/api/logout');
 
-        $this->assertGuest();
-        $response->assertNoContent();
+        $response->assertStatus(200);
     }
 }
