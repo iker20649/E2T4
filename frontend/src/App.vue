@@ -6,7 +6,7 @@ import logoImg from '@/assets/logoa.png'
 import './assets/main.css' 
 
 // --- CONFIGURACIÓN GLOBAL DE AXIOS ---
-axios.defaults.baseURL = 'http://127.0.0.1'; 
+axios.defaults.baseURL = 'http://54.85.126.89'; 
 axios.defaults.withCredentials = false; 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
