@@ -24,6 +24,7 @@ services:
     volumes:
       - .:/var/www
       - ./docker-config/nginx:/etc/nginx/conf.d
+      - ../frontend/dist:/var/www/frontend/dist # GEHITU LERRO HAU
     networks:
       - ile-sarea
     depends_on:
