@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Profesionala extends Model
 {
     use SoftDeletes;
-    protected $table = 'profesionalak';
+
+    // LERRO HAU DA GAKOA:
+    protected $table = 'profesionalak'; 
+
     protected $guarded = [];
 }

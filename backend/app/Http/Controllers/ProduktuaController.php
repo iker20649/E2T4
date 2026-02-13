@@ -9,9 +9,24 @@ use Illuminate\Support\Facades\Auth;
 
 class ProduktuaController extends Controller
 {
+    /**
+     * Produktu guztiak bueltatu (lehen index-ean errorea ematen dizu is_material falta delako)
+     */
     public function index()
     {
+        // Datu-basean zutabea falta denez, denak bueltatuko ditugu errorea saihesteko
         return Produktua::orderBy('izena', 'asc')->get();
+    }
+
+    /**
+     * Materialak / Tresneria
+     * Datu-basean is_material falta denez, denak bueltatuko ditugu oraingoz
+     */
+    public function getMaterialak()
+    {
+        // Kontuz: 'with' horrek errorea eman dezake azken_mailegua erlazioa definituta ez badago
+        // Seguruena hau da:
+        return response()->json(Produktua::all());
     }
 
     public function store(Request $request)
@@ -22,11 +37,11 @@ class ProduktuaController extends Controller
             'stock'        => 'required|integer|min:0',
             'stock_minimo' => 'nullable|integer|min:0',
             'prezioa'      => 'required|numeric|min:0',
+            // 'is_material' kendu dugu datu-basean ez dagoelako
         ]);
 
         $produktua = Produktua::create($validated);
 
-        // LOG-a: Produktu berria erregistratu
         StockMugimendua::create([
             'user_id'    => Auth::id(),
             'produktua'  => $produktua->izena,
@@ -53,7 +68,6 @@ class ProduktuaController extends Controller
         
         $produktua->save();
 
-        // LOG-a: Mugimendua erregistratu
         StockMugimendua::create([
             'user_id'    => Auth::id(),
             'produktua'  => $produktua->izena,

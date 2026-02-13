@@ -3,7 +3,7 @@
 namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
-class Hitzordua extends Model {
-    protected $table = 'hitzorduak';
+class Taldea extends Model {
+    protected $table = 'taldeak';
     protected $guarded = [];
 }

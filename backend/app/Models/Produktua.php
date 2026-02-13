@@ -1,18 +1,19 @@
 <?php
 
 namespace App\Models;
-
 use Illuminate\Database\Eloquent\Model;
 
-class Produktua extends Model
+class Produktua extends Model {
+    public function maileguak()
 {
-    protected $table = 'produktuak'; // Importante para que encuentre la tabla
+    return $this->hasMany(Mailegua::class, 'materiala_id');
+}
 
-    protected $fillable = [
-        'izena',
-        'marka',
-        'stock',
-        'stock_minimo',
-        'prezioa'
-    ];
+public function azken_mailegua()
+{
+    return $this->hasOne(Mailegua::class, 'materiala_id')->where('itzulita', false)->latest();
+}
+
+// Zutabe berria masiboki kargatzeko baimena eman
+protected $fillable = ['izena', 'marka', 'stock', 'stock_minimo', 'prezioa', 'is_material'];
 }

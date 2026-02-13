@@ -3,46 +3,47 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request; // Añadimos Request
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function store(LoginRequest $request): JsonResponse
+    public function store(Request $request)
     {
-        // 1. Validar credenciales
-        $request->authenticate();
-
-        $user = Auth::user();
-
-        // 2. Limpiar tokens anteriores
-        $user->tokens()->delete();
-
-        // 3. Crear el token de acceso
-        // Cambiamos 'token' por 'access_token' para que coincida con lo que busca el Test
-        $token = $user->createToken('token-app')->plainTextToken;
-
-        return response()->json([
-            'access_token' => $token, 
-            'user' => [
-                'name' => $user->name,
-                'email' => $user->email,
-                'rola' => $user->rola, 
-            ]
+        // 1. Balidazioa (Honek ematen du 422 errorea datuak gaizki badoaz)
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
         ]);
-    }
 
-    public function destroy(Request $request): JsonResponse
-    {
-        // Añadimos una comprobación para evitar el error de TransientToken en los tests
-        $token = $request->user()->currentAccessToken();
-        
-        if ($token && method_exists($token, 'delete')) {
-            $token->delete();
+        // 2. Saiatu saioa hasten
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            
+            // 3. Tokena sortu (Sanctum)
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'rola' => $user->rola, // Ezinbestekoa Frontend-erako
+                ]
+            ]);
         }
 
+        // Kredentzialak okerrak badira
+        return response()->json([
+            'message' => 'Kredentzialak ez dira zuzenak.'
+        ], 401);
+    }
+
+    public function destroy(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Saioa itxi da']);
     }
 }

@@ -2,86 +2,53 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use App\Models\Bezeroa;
-use App\Models\Hitzordua;
-use App\Models\Produktua;
-use App\Models\StockMugimendua;
 use Illuminate\Database\Seeder;
+use App\Models\User;
+use App\Models\Taldea;
+use App\Models\Bezeroa;
+use App\Models\Produktua;
+use App\Models\Hitzordua;
 use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. ERABILTZAILEAK (Vue-ko 'irakasle' eta 'ikasle' balioekin bat egiteko)
-        $irakasle = User::create([
-            'name' => 'Irakasle Principal',
-            'email' => 'irakasle@test.com',
-            'password' => Hash::make('password'),
-            'rola' => 'irakasle', // 'a' gabe, Vue-n horrela dagoelako
+        // 1. Taldea sortu
+        $t1 = Taldea::create([
+            'izena' => '3WAG2',
+            'lan_egunak' => json_encode(['Monday', 'Wednesday', 'Friday'])
         ]);
 
-        $ikasle = User::create([
-            'name' => 'Ikasle Test',
-            'email' => 'ikasle@test.com',
-            'password' => Hash::make('password'),
-            'rola' => 'ikasle', // 'a' gabe
+        // 2. Erabiltzailea sortu
+        $u1 = User::create([
+            'name' => 'Iker Zubizarreta',
+            'email' => 'iker@ikasle.com',
+            'password' => Hash::make('12345678'),
+            'rola' => 'ikaslea',
+            'taldea_id' => $t1->id
         ]);
 
-        // 2. BEZEROAK (Ikasleari lotuta, berak kudeatzen dituelako)
-        $bezero1 = Bezeroa::create([
-            'izena' => 'Ane',
-            'abizenak' => 'Garcia',
-            'emaila' => 'ane@example.com',
-            'telefonoa' => '600112233',
-            'deskribapena' => 'Alergia a tintes amoniacales.',
-            'user_id' => $ikasle->id, // Ikaslearen bezeroa
-            'bisita_kopurua' => 1,
-        ]);
-
-        $bezero2 = Bezeroa::create([
-            'izena' => 'Jon',
+        // 3. Bezeroa sortu
+        $b1 = Bezeroa::create([
+            'izena' => 'Gorka',
             'abizenak' => 'Iturbe',
-            'emaila' => 'jon@example.com',
-            'telefonoa' => '655443322',
-            'deskribapena' => 'Corte clásico de caballero.',
-            'user_id' => $ikasle->id, // Ikaslearen bezeroa
-            'bisita_kopurua' => 3,
+            'telefonoa' => '600111222'
         ]);
 
-        // 3. PRODUKTUAK
-        $xanpua = Produktua::create([
-            'izena' => 'Champú Hidratante 1L',
-            'marka' => 'Loreal',
-            'prezioa' => 15.50,
+        // 4. Produktua sortu
+        Produktua::create([
+            'izena' => 'Xanpu Loreal 1L',
             'stock' => 10,
             'stock_minimo' => 2
         ]);
 
-        // 4. HITZORDUAK (Ikaslearen bezeroekin)
+        // 5. Hitzordua sortu
         Hitzordua::create([
-            'user_id' => $ikasle->id,
-            'bezeroa' => 'Ane Garcia',
-            'data' => now()->addDays(1),
-            'deskribapena' => 'Tinte y Secado profesional',
-            'finalizatuta' => false
-        ]);
-
-        Hitzordua::create([
-            'user_id' => $ikasle->id,
-            'bezeroa' => 'Jon Iturbe',
-            'data' => now()->addHours(2),
-            'deskribapena' => 'Corte de pelo rápido',
-            'finalizatuta' => false
-        ]);
-
-        // 5. STOCK MUGIMENDUAK (Irakasleak egindakoa bezala agertzeko)
-        StockMugimendua::create([
-            'user_id' => $irakasle->id,
-            'produktua' => 'Champú Hidratante 1L',
-            'kantitatea' => 10,
-            'ekintza' => 'Erosita'
+            'user_id' => $u1->id,
+            'bezero_id' => $b1->id,
+            'data' => now(),
+            'deskribapena' => 'Mozketa orokorra'
         ]);
     }
 }

@@ -2,52 +2,45 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
-// Importaciones de tus controladores
-use App\Http\Controllers\AdminController;
-use App\Http\Controllers\BezeroaController;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\HitzorduaController;
 use App\Http\Controllers\ProduktuaController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\BezeroaController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\MaileguaController;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-*/
-
-// --- RUTAS PÚBLICAS ---
-Route::post('/login', [AuthenticatedSessionController::class, 'store']);
-// Nueva ruta para que Vue pueda registrar alumnos
+// --- PUBLIKOAK ---
+// .name('login') gehituta errorea saihesteko
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
 Route::post('/register', [AdminController::class, 'storeIkaslea']); 
 
-// --- RUTAS PROTEGIDAS (Sanctum) ---
+// Probatzeko, jarri materialak hemen (babesik gabe) nabigatzailean ikusteko
+Route::get('/materialak', [ProduktuaController::class, 'getMaterialak']);
+
+// --- BABESTUAK ---
 Route::middleware('auth:sanctum')->group(function () {
     
+    Route::get('/dashboard-stats', [HitzorduaController::class, 'getStats']);
+
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    Route::post('/profile/update', [ProfileController::class, 'update']);
-    Route::apiResource('hitzorduak', HitzorduaController::class);
-
-    // Produktuak (Stock)
-    Route::get('/produktuak', [ProduktuaController::class, 'index']);
-    Route::post('/produktuak', [ProduktuaController::class, 'store']);
+    // Stock eguneraketa babestuta mantentzen dugu
     Route::patch('/produktuak/{id}/stock', [ProduktuaController::class, 'updateStock']);
-    Route::delete('/produktuak/{id}', [ProduktuaController::class, 'destroy']);
 
-    // Bezeroak (Clientes)
-    Route::get('/bezeroak', [BezeroaController::class, 'index']);
-    Route::post('/bezeroak', [BezeroaController::class, 'store']);
-    Route::put('/bezeroak/{id}', [BezeroaController::class, 'update']);
-    Route::delete('/bezeroak/{id}', [BezeroaController::class, 'destroy']);
+    // Baliabideak
+    Route::apiResource('hitzorduak', HitzorduaController::class);
+    Route::apiResource('bezeroak', BezeroaController::class);
+    Route::apiResource('produktuak', ProduktuaController::class);
+    
+    // Maileguak
+    Route::post('/maileguak', [MaileguaController::class, 'store']);
+    Route::put('/maileguak/{id}', [MaileguaController::class, 'update']);
 
-    // Admin Panel
+    // Admin
     Route::prefix('admin')->group(function () {
         Route::get('/ikasleak', [AdminController::class, 'getIkasleak']);
-        Route::delete('/ikasleak/{id}', [AdminController::class, 'destroyIkaslea']);
         Route::get('/stock-historiala', [AdminController::class, 'getStockHistoriala']);
     });
 
