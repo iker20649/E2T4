@@ -14,3 +14,9 @@ Este proyecto está desplegado en una instancia de **AWS (EC2)** utilizando **Do
 1. `cd frontend`
 2. `npm install`
 3. `npm run dev`
+
+
+3. Credenciales de prueba
+Usuario de prueba: admin@test.com
+
+Contraseña: 12345678
