@@ -3,28 +3,24 @@ import { ref, onMounted, computed } from 'vue'
 import axios from 'axios'
 
 const user = ref({ name: '', rola: '' })
-const stats = ref({ hitzorduak: 0, stockBaxua: 0, produktuGuztiak: 0 })
+const stats = ref({ hitzorduak: 0, stockBaxua: 0, produktuaGuztiak: 0 })
 const hitzorduak = ref([]) 
 const loading = ref(true)
 
-// Configuración para que Axios use cookies de sesión
 axios.defaults.withCredentials = true;
-
+// Cambia la IP y el puerto según lo que hayas visto en el paso anterior
+axios.defaults.baseURL = 'http://98.93.71.5';
 const kargatuDatuak = async () => {
   try {
-    // CAMBIO: Rutas absolutas con /api/ y sin headers de Authorization
-    const [resUser, resProd, resHitz] = await Promise.all([
-      axios.get('/api/user'),
-      axios.get('/api/produktuak'),
-      axios.get('/api/hitzorduak').catch(() => ({ data: [] }))
-    ])
-    
+    // 1. Erabiltzailea jaso
+    const resUser = await axios.get('/api/user')
     user.value = resUser.data
-    hitzorduak.value = resHitz.data
-    
-    stats.value.produktuaGuztiak = resProd.data.length
-    stats.value.stockBaxua = resProd.data.filter(p => p.stock <= p.stock_minimo).length
-    stats.value.hitzorduak = resHitz.data.length
+
+    // 2. Estatistikak eta Gaurko Hitzorduak jaso
+    const resDashboard = await axios.get('/api/dashboard-stats')
+    stats.value = resDashboard.data.stats
+    hitzorduak.value = resDashboard.data.gaurkoHitzorduak
+
   } catch (e) { 
     console.error("Errorea datuak kargatzean:", e) 
   } finally { 
@@ -39,108 +35,66 @@ const agurmezua = computed(() => {
   return 'Gabon'
 })
 
-const gaurkoHitzorduak = computed(() => {
-  return hitzorduak.value.slice(0, 3)
-})
-
 const formatua = (dataString) => {
   if (!dataString) return '--:--'
   const d = new Date(dataString)
-  return d.toLocaleString('eu-ES', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleTimeString('eu-ES', { hour: '2-digit', minute: '2-digit' })
 }
 
 onMounted(kargatuDatuak)
 </script>
 
 <template>
-  <div v-if="!loading" class="space-y-12 animate-fade-in pb-20 pt-10 px-4">
+  <div v-if="!loading" class="max-w-7xl mx-auto space-y-8 md:space-y-12 animate-fade-in pb-20 pt-6 md:pt-10 px-4">
     
-    <header class="bg-indigo-900 text-white p-12 md:p-16 rounded-[3rem] md:rounded-[4rem] shadow-[0_35px_60px_-15px_rgba(79,70,229,0.4)] border-b-[12px] border-indigo-400 relative overflow-hidden">
+    <header class="bg-indigo-900 text-white p-8 md:p-16 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl border-b-[10px] border-indigo-400 relative overflow-hidden">
       <div class="relative z-10">
-        <span class="bg-indigo-400/30 text-indigo-200 px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-400/30">
+        <span class="bg-indigo-400/30 text-indigo-200 px-4 py-2 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest border border-indigo-400/30">
           {{ user.rola === 'irakasle' ? 'Irakasle Sistema' : 'Ikasle Sistema' }}
         </span>
-        <h1 class="text-6xl md:text-8xl font-black italic mt-10 tracking-tighter uppercase leading-none">
+        <h1 class="text-4xl md:text-8xl font-black italic mt-6 md:mt-10 tracking-tighter uppercase leading-none">
           {{ agurmezua }}, <span class="text-indigo-400">{{ user.name }}</span>!
         </h1>
-        <p class="mt-8 text-indigo-100/70 max-w-2xl text-xl md:text-2xl font-medium italic leading-relaxed">
-          {{ user.rola === 'irakasle' 
-            ? 'Administrazio panel nagusia. Kudeatu inbentarioa eta ikasleak leku bakarretik.' 
-            : 'Zure lan-eremua prest dago. Begiratu gaurko materiala eta txandak.' }}
-        </p>
       </div>
-      <div class="absolute right-[-2rem] top-[-2rem] text-[20rem] opacity-10 font-black italic select-none leading-none pointer-events-none">
-        KAIXO
-      </div>
+      <div class="absolute right-[-2rem] top-[-2rem] text-[12rem] md:text-[20rem] opacity-10 font-black italic pointer-events-none hidden sm:block">KAIXO</div>
     </header>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
-      <div class="bg-white p-12 rounded-[3.5rem] shadow-2xl border-t-8 border-indigo-500 hover:-translate-y-3 transition-all duration-300">
-        <p class="text-indigo-400 font-black uppercase text-sm tracking-[0.2em] mb-4">Hitzorduak</p>
-        <p class="text-8xl font-black text-slate-900">{{ stats.hitzorduak }}</p>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+      <div class="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border-t-8 border-indigo-500">
+        <p class="text-indigo-400 font-black uppercase text-xs tracking-widest mb-4">Hitzorduak</p>
+        <p class="text-6xl md:text-8xl font-black text-slate-900">{{ stats.hitzorduak }}</p>
       </div>
-      <div class="bg-white p-12 rounded-[3.5rem] shadow-2xl border-t-8 border-rose-500 hover:-translate-y-3 transition-all duration-300">
-        <p class="text-rose-400 font-black uppercase text-sm tracking-[0.2em] mb-4">Stock Alerta</p>
-        <p class="text-8xl font-black text-rose-600">{{ stats.stockBaxua }}</p>
+      
+      <div :class="stats.stockBaxua > 0 ? 'border-rose-500 bg-rose-50' : 'border-emerald-500'" class="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border-t-8 transition-colors">
+        <p :class="stats.stockBaxua > 0 ? 'text-rose-500' : 'text-emerald-500'" class="font-black uppercase text-xs tracking-widest mb-4">Stock Alerta</p>
+        <p class="text-6xl md:text-8xl font-black" :class="stats.stockBaxua > 0 ? 'text-rose-600' : 'text-slate-900'">{{ stats.stockBaxua }}</p>
       </div>
-      <div class="bg-white p-12 rounded-[3.5rem] shadow-2xl border-t-8 border-emerald-500 hover:-translate-y-3 transition-all duration-300">
-        <p class="text-emerald-400 font-black uppercase text-sm tracking-[0.2em] mb-4">Produktuak</p>
-        <p class="text-8xl font-black text-slate-900">{{ stats.produktuaGuztiak }}</p>
+
+      <div class="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl border-t-8 border-slate-800 lg:col-span-1 sm:col-span-2">
+        <p class="text-slate-400 font-black uppercase text-xs tracking-widest mb-4">Produktuak</p>
+        <p class="text-6xl md:text-8xl font-black text-slate-900">{{ stats.produktuaGuztiak }}</p>
       </div>
     </div>
 
-    <section v-if="user.rola === 'ikasle'" class="space-y-8 pt-6">
-      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center px-6 gap-4">
-        <h2 class="text-4xl font-black uppercase italic text-indigo-900 tracking-tighter">📅 Gaurko Hitzorduak</h2>
-        <router-link to="/hitzorduak" class="bg-indigo-100 text-indigo-600 px-6 py-2 rounded-full font-black uppercase text-xs hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
-          Agenda Osoa →
-        </router-link>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div v-for="h in gaurkoHitzorduak" :key="h.id" 
-             class="bg-white p-10 rounded-[3.5rem] shadow-xl border-l-[15px] border-indigo-500 group hover:bg-indigo-50 transition-all">
-          <div class="flex justify-between items-start mb-6">
-            <span class="bg-indigo-600 text-white px-5 py-2 rounded-2xl text-xs font-black uppercase italic shadow-md">
-              {{ formatua(h.data) }}
-            </span>
-          </div>
-          <h3 class="text-3xl font-black text-slate-800 uppercase italic tracking-tighter leading-none group-hover:text-indigo-600 transition-colors">{{ h.bezeroa }}</h3>
-          <p class="text-slate-400 font-bold mt-4 italic text-lg leading-tight">{{ h.deskribapena || 'Zerbitzu orokorra' }}</p>
-        </div>
-        
-        <div v-if="gaurkoHitzorduak.length === 0" class="col-span-full bg-slate-50 p-20 rounded-[4rem] text-center border-4 border-dashed border-slate-200">
-          <p class="text-slate-300 font-black uppercase tracking-[0.3em] text-xl italic">Gaur ez daukazu hitzordurik</p>
+    <section v-if="hitzorduak.length > 0" class="space-y-6">
+      <h2 class="text-3xl font-black uppercase italic text-indigo-900 px-2">📅 Gaurko Agenda</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div v-for="h in hitzorduak" :key="h.id" class="bg-white p-8 rounded-[2.5rem] shadow-lg border-l-[12px] border-indigo-500">
+          <span class="bg-indigo-600 text-white px-3 py-1 rounded-lg text-[10px] font-bold uppercase">{{ formatua(h.data) }}</span>
+          <h3 class="text-2xl font-black text-slate-800 mt-4 uppercase truncate">{{ h.bezeroa?.izena || 'Bezeroa' }}</h3>
+          <p class="text-slate-400 font-medium mt-2 italic line-clamp-2">{{ h.deskribapena || 'Zerbitzu orokorra' }}</p>
         </div>
       </div>
     </section>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6">
-      <router-link to="/stock" class="group bg-white p-12 md:p-16 rounded-[4rem] md:rounded-[4.5rem] shadow-2xl hover:shadow-indigo-200/50 transition-all relative overflow-hidden border border-indigo-100">
-        <span class="text-7xl mb-8 block">🧴</span>
-        <h3 class="text-4xl md:text-6xl font-black uppercase italic text-indigo-950 group-hover:translate-x-6 transition-transform leading-none">Inbentarioa</h3>
-        <p class="text-indigo-600 mt-6 font-bold uppercase tracking-widest text-sm italic">Materialaren kontrol osoa</p>
-        <div class="absolute right-[-2rem] bottom-[-2rem] text-[15rem] opacity-[0.03] font-black italic select-none pointer-events-none">STOCKA</div>
-      </router-link>
-
-      <router-link v-if="user.rola === 'irakasle'" to="/admin/ikasleak" class="group bg-slate-900 p-12 md:p-16 rounded-[4rem] md:rounded-[4.5rem] shadow-2xl hover:scale-[1.02] transition-all text-white relative overflow-hidden">
-        <span class="text-7xl mb-8 block">📊</span>
-        <h3 class="text-4xl md:text-6xl font-black uppercase italic group-hover:translate-x-6 transition-transform leading-none">Jarraipena</h3>
-        <p class="text-indigo-400 mt-6 font-bold uppercase tracking-widest text-sm italic">Ikasleen log-ak kudeatu</p>
-        <div class="absolute right-[-2rem] bottom-[-2rem] text-[15rem] opacity-10 font-black italic select-none pointer-events-none">LOGAK</div>
-      </router-link>
-      
-      <router-link v-else to="/hitzorduak" class="group bg-violet-600 p-12 md:p-16 rounded-[4rem] md:rounded-[4.5rem] shadow-2xl hover:scale-[1.02] transition-all text-white relative overflow-hidden">
-        <span class="text-7xl mb-8 block">📅</span>
-        <h3 class="text-4xl md:text-6xl font-black uppercase italic group-hover:translate-x-6 transition-transform leading-none">Hitzorduak</h3>
-        <p class="text-violet-100 mt-6 font-bold uppercase tracking-widest text-sm italic">Agenda eta txandak kudeatu</p>
-        <div class="absolute right-[-2rem] bottom-[-2rem] text-[12rem] opacity-10 font-black italic select-none pointer-events-none">HITZORDUAK</div>
-      </router-link>
-    </div>
   </div>
 
   <div v-else class="h-screen flex flex-col items-center justify-center space-y-6">
-    <div class="w-24 h-24 border-8 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
-    <p class="text-indigo-900 font-black uppercase italic tracking-widest animate-pulse text-2xl">Datuak kargatzen...</p>
+    <div class="w-16 h-16 border-8 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+    <p class="text-indigo-900 font-black uppercase italic animate-pulse">Datuak kargatzen...</p>
   </div>
 </template>
+
+<style scoped>
+.animate-fade-in { animation: fadeIn 0.6s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>

@@ -6,7 +6,9 @@ import logoImg from '@/assets/logoa.png'
 import './assets/main.css' 
 
 // --- CONFIGURACIÓN GLOBAL DE AXIOS ---
-axios.defaults.baseURL = 'http://54.85.126.89'; 
+// IP eguneratua gaurkoarekin
+// Cambia la IP y el puerto según lo que hayas visto en el paso anterior
+axios.defaults.baseURL = 'http://98.93.71.5';
 axios.defaults.withCredentials = false; 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
@@ -64,67 +66,107 @@ const logout = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen w-full bg-[#f1f5f9]" style="background-color: #f1f5f9; min-height: 100vh;">
-    
-    <nav v-if="route.path !== '/login' && isLoggedIn" 
-         style="background-color: #1e1b4b !important; color: white !important; display: block; width: 100%; border-bottom: 4px solid #6366f1; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
-      
-      <div class="max-w-7xl mx-auto px-4 h-24 flex justify-between items-center" 
-           style="max-width: 1280px; margin: 0 auto; height: 96px; display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+  <div class="min-h-screen w-full bg-[#f1f5f9] font-sans">
+    <nav v-if="route.path !== '/login' && isLoggedIn" class="bg-[#1e1b4b] border-b-4 border-[#6366f1] shadow-2xl">
+      <div class="max-w-7xl mx-auto px-6 h-24 flex justify-between items-center">
         
-        <div class="flex items-center space-x-10" style="display: flex; align-items: center; gap: 40px;">
-          <RouterLink to="/hitzorduak" style="display: flex; align-items: center; gap: 15px; text-decoration: none;">
-            <img :src="logoImg" style="height: 60px; border-radius: 15px; display: block;">
-            <h1 style="color: white; font-size: 24px; font-weight: 900; margin: 0; font-style: italic; text-transform: uppercase;">
-              Ilea<span style="color: #6366f1;">.</span>App
-            </h1>
+        <div class="flex items-center gap-10">
+          <RouterLink to="/hitzorduak" class="flex items-center gap-3 no-underline">
+            <img :src="logoImg" class="h-12 rounded-xl">
+            <h1 class="text-white font-black italic uppercase text-2xl tracking-tighter">Ilea<span class="text-indigo-500">.</span>App</h1>
           </RouterLink>
 
-          <div class="hidden md:flex" style="display: flex; gap: 25px; align-items: center;">
-            <RouterLink to="/hitzorduak" class="nav-link">Hitzorduak</RouterLink>
-            <RouterLink to="/bezeroak" class="nav-link">Bezeroak</RouterLink>
-            <RouterLink to="/stock" class="nav-link">Stocka</RouterLink>
+          <div class="flex gap-6">
+            <RouterLink to="/hitzorduak" class="text-white no-underline font-bold text-sm uppercase hover:text-indigo-400">Hitzorduak</RouterLink>
+            <RouterLink to="/bezeroak" class="text-white no-underline font-bold text-sm uppercase hover:text-indigo-400">Bezeroak</RouterLink>
+            <RouterLink to="/stock" class="text-white no-underline font-bold text-sm uppercase hover:text-indigo-400">Stocka</RouterLink>
             
             <template v-if="user?.rola === 'irakasle'">
-              <div style="width: 2px; height: 24px; background-color: rgba(99, 102, 241, 0.3);"></div>
-              <RouterLink to="/admin" 
-                style="background-color: rgba(99, 102, 241, 0.2); color: #a5b4fc; padding: 8px 16px; border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.5); text-decoration: none; font-weight: bold;">
-                Ikasleen Kontrola & Log
+              <RouterLink to="/kontrola" class="bg-indigo-600/20 text-indigo-300 px-4 py-1 rounded-lg border border-indigo-500/50 no-underline font-black text-xs uppercase">
+                Kontrola
               </RouterLink>
             </template>
           </div>
         </div>
 
-        <div style="display: flex; align-items: center; gap: 20px;">
-          <div style="text-align: right;">
-            <p style="color: #818cf8; font-size: 10px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: 1px;">
-              {{ user?.rola || 'Kargatzen...' }}
-            </p>
-            <p style="color: white; font-size: 14px; font-weight: bold; margin: 0;">{{ user?.name }}</p>
+        <div class="flex items-center gap-6">
+          <div class="text-right hidden sm:block">
+            <p class="text-indigo-400 font-black text-[10px] uppercase m-0">{{ user?.rola }}</p>
+            <p class="text-white font-bold text-sm m-0">{{ user?.name }}</p>
           </div>
-          <button @click="logout" 
-            style="background-color: #e11d48; color: white; padding: 10px 20px; border-radius: 12px; font-weight: 900; border: none; border-bottom: 4px solid #9f1239; cursor: pointer; font-size: 10px;">
-            LOG OUT
-          </button>
+          <button @click="logout" class="bg-rose-600 text-white px-4 py-2 rounded-xl font-black text-[10px] border-b-4 border-rose-800 active:border-0 transition-all uppercase">OUT</button>
         </div>
-
       </div>
     </nav>
 
-    <main :class="route.path === '/login' ? '' : 'max-w-7xl mx-auto py-12 px-6'" 
-          style="max-width: 1280px; margin: 0 auto; padding: 40px 20px;">
+    <main :class="route.path === '/login' ? '' : 'max-w-7xl mx-auto p-6'">
       <RouterView />
     </main>
-
   </div>
 </template>
 
 <style scoped>
+/* KONTEINER NAGUSIA */
+.nav-container {
+  background-color: #1e1b4b !important;
+  color: white !important;
+  width: 100%;
+  border-bottom: 4px solid #6366f1;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+.nav-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  min-height: 80px; /* Lehen 96px finkoa zen, orain minimoa da */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 20px;
+  flex-wrap: wrap; /* Garrantzitsua mugikorrerako */
+  gap: 10px;
+}
+
+.flex-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+/* LOGOA */
+.logo-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.logo-img {
+  height: 45px; /* Pixka bat txikiagoa mugikorrean */
+  border-radius: 10px;
+}
+.logo-text {
+  color: white;
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0;
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+/* LOTURAK */
+.nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  flex-wrap: wrap; /* Loturak azpira jaisteko lekua ez badago */
+}
+
 .nav-link {
   color: white;
   text-decoration: none;
   font-weight: bold;
-  font-size: 14px;
+  font-size: 13px;
   transition: color 0.3s;
 }
 .nav-link:hover {
@@ -132,5 +174,66 @@ const logout = async () => {
 }
 .router-link-active {
   color: #6366f1 !important;
+}
+
+.admin-link {
+  background-color: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(99, 102, 241, 0.5);
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+/* USER ALDEA */
+.user-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.user-info {
+  text-align: right;
+}
+.role-badge {
+  color: #818cf8;
+  font-size: 9px;
+  font-weight: 900;
+  margin: 0;
+  text-transform: uppercase;
+}
+.user-name {
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  margin: 0;
+}
+
+.logout-btn {
+  background-color: #e11d48;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 10px;
+  font-weight: 900;
+  border: none;
+  border-bottom: 3px solid #9f1239;
+  cursor: pointer;
+  font-size: 9px;
+}
+
+/* MAIN */
+.main-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 20px 15px; /* Padding-a gutxitu dugu mugikorrerako */
+}
+
+/* Pantaila handietarako doikuntzak */
+@media (min-width: 768px) {
+  .logo-img { height: 60px; }
+  .logo-text { font-size: 24px; }
+  .nav-link { font-size: 14px; }
+  .nav-content { height: 96px; padding: 0 20px; }
 }
 </style>

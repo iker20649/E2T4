@@ -4,69 +4,92 @@ import axios from 'axios'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-// Valores por defecto (útiles para desarrollo, bórralos para producción)
-const email = ref('irakasle@test.com') 
-const password = ref('password123') 
+const email = ref('')
+const password = ref('')
+const error = ref('')
 
-const login = async () => { // He cambiado el nombre a 'login' para que coincida con el HTML
+// Konfigurazioa
+// Cambia la IP y el puerto según lo que hayas visto en el paso anterior
+axios.defaults.baseURL = 'http://98.93.71.5';
+axios.defaults.withCredentials = true;
+
+const login = async () => {
+  error.value = ''
   try {
-    const response = await axios.post('/api/login', {
+    // 1. Laravelek JSON espero duela ziurtatu
+    const response = await axios.post('/login', {
       email: email.value,
       password: password.value
+    }, {
+      headers: {
+        'Accept': 'application/json'
+      }
     });
 
-    // Extraemos token y datos del usuario
-    const token = response.data.access_token || response.data.token;
-    const user = response.data.user;
+    // 2. Tokena eta Rola jaso
+    if (response.data.access_token) {
+      const token = response.data.access_token;
+      const userRola = response.data.user.rola; // Backendetik datorren rola
 
-    if (token && user) {
-      // GUARDADO EN LOCALSTORAGE
+      // 3. Lokaluki gorde (Routerrak eta Axios-ek erabiltzeko)
       localStorage.setItem('token', token);
-      localStorage.setItem('rol', user.rola);
+      localStorage.setItem('rol', userRola); // Gako hau ezinbestekoa da zure routerrako
       
-      // Configurar Axios para que la siguiente petición ya lleve el token
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-
-      // Redirigir a Hitzorduak
+      
+      // 4. Bide zuzenera joan (Zure routerrean /hitzorduak da nagusia)
       router.push('/hitzorduak');
-    } else {
-      alert("Errorea: Tokena edo erabiltzailea falta da.");
     }
-
-  } catch (error) {
-    console.error("Login errorea:", error);
-    alert("Saioa hasten huts egin du. Egiaztatu zure datuak.");
+  } catch (err) {
+    if (err.response && err.response.status === 422) {
+      error.value = "Emaila edo pasahitza okerra da.";
+    } else {
+      error.value = "Zerbitzari errore bat gertatu da.";
+    }
+    console.error("Login Errorea:", err.response?.data);
   }
-};
+}
 </script>
 
 <template>
-  <div class="min-h-screen w-full flex items-center justify-center bg-[#f1f5f9] italic uppercase font-sans">
-    <div class="max-w-md w-full bg-white p-12 rounded-[3rem] shadow-2xl border-b-[12px] border-indigo-600 mx-4">
-      
-      <h2 class="text-4xl font-black text-center text-indigo-950 mb-8 tracking-tighter">
+  <div class="min-h-screen flex items-center justify-center bg-slate-100 uppercase italic p-4 font-sans">
+    <div class="max-w-md w-full bg-white p-10 rounded-[3rem] shadow-2xl border-b-[12px] border-indigo-600 animate-fade-in">
+      <h2 class="text-4xl font-black text-center text-indigo-950 mb-8 tracking-tighter italic">
         ILEA<span class="text-indigo-600">.</span>APP
       </h2>
-
-      <form @submit.prevent="login" class="space-y-5 not-italic">
+      
+      <form @submit.prevent="login" class="space-y-6 not-italic">
         <div>
-          <label class="block text-xs font-black text-indigo-900 mb-1 ml-2 uppercase">Emaila</label>
-          <input v-model="email" type="email" required
-            class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none font-bold shadow-inner transition-all">
+          <label class="block text-[10px] font-black text-indigo-900 mb-1 ml-2 uppercase tracking-widest">Emaila</label>
+          <input v-model="email" type="email" placeholder="admin@admin.com" 
+            class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 outline-none focus:border-indigo-500 font-bold transition-all shadow-inner">
         </div>
 
         <div>
-          <label class="block text-xs font-black text-indigo-900 mb-1 ml-2 uppercase">Pasahitza</label>
-          <input v-model="password" type="password" required
-            class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 outline-none font-bold shadow-inner transition-all">
+          <label class="block text-[10px] font-black text-indigo-900 mb-1 ml-2 uppercase tracking-widest">Pasahitza</label>
+          <input v-model="password" type="password" placeholder="••••••••" 
+            class="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 outline-none focus:border-indigo-500 font-bold transition-all shadow-inner">
         </div>
+
+        <p v-if="error" class="text-red-600 text-[10px] font-black text-center uppercase bg-red-50 py-2 rounded-lg border border-red-100">
+          {{ error }}
+        </p>
 
         <button type="submit" 
-          class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 transition-all active:scale-95 shadow-lg mt-4 border-b-4 border-indigo-800">
+          class="w-full bg-indigo-600 text-white p-5 rounded-2xl font-black uppercase tracking-widest hover:bg-indigo-700 active:scale-95 transition-all shadow-lg border-b-4 border-indigo-800">
           Hasi Saioa 🚀
         </button>
       </form>
-
     </div>
   </div>
-</template> 
+</template>
+
+<style scoped>
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
