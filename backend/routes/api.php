@@ -1,48 +1,31 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\HitzorduaController;
-use App\Http\Controllers\ProduktuaController;
-use App\Http\Controllers\BezeroaController;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
-use App\Http\Controllers\MaileguaController;
+use App\Http\Controllers\BezeroaController;
+use App\Http\Controllers\MaterialaController;
+use App\Http\Controllers\ProduktuaController;
 
-// --- PUBLIKOAK ---
-// .name('login') gehituta errorea saihesteko
-Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login');
-Route::post('/register', [AdminController::class, 'storeIkaslea']); 
+Route::post('/login', [AuthController::class, 'login']);
 
-// Probatzeko, jarri materialak hemen (babesik gabe) nabigatzailean ikusteko
-Route::get('/materialak', [ProduktuaController::class, 'getMaterialak']);
-
-// --- BABESTUAK ---
 Route::middleware('auth:sanctum')->group(function () {
-    
-    Route::get('/dashboard-stats', [HitzorduaController::class, 'getStats']);
-
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
 
-    // Stock eguneraketa babestuta mantentzen dugu
-    Route::patch('/produktuak/{id}/stock', [ProduktuaController::class, 'updateStock']);
-
-    // Baliabideak
-    Route::apiResource('hitzorduak', HitzorduaController::class);
-    Route::apiResource('bezeroak', BezeroaController::class);
-    Route::apiResource('produktuak', ProduktuaController::class);
-    
-    // Maileguak
-    Route::post('/maileguak', [MaileguaController::class, 'store']);
-    Route::put('/maileguak/{id}', [MaileguaController::class, 'update']);
-
-    // Admin
-    Route::prefix('admin')->group(function () {
-        Route::get('/ikasleak', [AdminController::class, 'getIkasleak']);
-        Route::get('/stock-historiala', [AdminController::class, 'getStockHistoriala']);
+    // Grupo para capturar el error de /api/api del frontend
+    Route::prefix('api')->group(function () {
+        Route::get('/admin/ikasleak', [BezeroaController::class, 'index']);
+        Route::get('/admin/stock-historiala', [MaterialaController::class, 'index']); // La que te fallaba
+        Route::get('/admin/stats', [AdminController::class, 'index']);
+        Route::get('/user', function (Request $request) { return $request->user(); });
     });
 
-    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy']);
+    // Rutas estándar
+    Route::get('/admin/ikasleak', [BezeroaController::class, 'index']);
+    Route::get('/bezeroak', [BezeroaController::class, 'index']);
+    Route::get('/hitzorduak', [App\Http\Controllers\HitzorduaController::class, 'index']);
+    Route::get('/materialas', [MaterialaController::class, 'index']);
+    Route::get('/produktuak', [ProduktuaController::class, 'index']);
 });

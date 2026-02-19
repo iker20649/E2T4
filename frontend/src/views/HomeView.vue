@@ -9,15 +9,14 @@ const loading = ref(true)
 
 axios.defaults.withCredentials = true;
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 const kargatuDatuak = async () => {
   try {
     // 1. Erabiltzailea jaso
-    const resUser = await axios.get('/api/user')
+    const resUser = await axios.get('/user')
     user.value = resUser.data
 
     // 2. Estatistikak eta Gaurko Hitzorduak jaso
-    const resDashboard = await axios.get('/api/dashboard-stats')
+    const resDashboard = await axios.get('/dashboard-stats')
     stats.value = resDashboard.data.stats
     hitzorduak.value = resDashboard.data.gaurkoHitzorduak
 

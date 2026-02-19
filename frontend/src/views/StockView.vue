@@ -25,7 +25,6 @@ const nuevo = ref({
 
 // --- KONFIGURAZIOA ---
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 const token = localStorage.getItem('token');
 if (token) axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
@@ -34,52 +33,61 @@ const kargatuDatuak = async () => {
     const [resUser, resProd, resIkas] = await Promise.all([
       axios.get('/api/user'),
       axios.get('/api/produktuak'),
-      // CAMBIO AQUÍ: Ahora la ruta es /api/admin/ikasleak
       axios.get('/api/admin/ikasleak')
     ]);
 
-    userRola.value = (resUser.data.rola || '').toLowerCase().trim();
-    
-    // MAPEO DE SEGURIDAD: Nos aseguramos de que cada ikasle tenga una propiedad .name
-    // aunque en la base de datos se llame .izena
-    ikasleak.value = resIkas.data.map(i => ({
+    // 1. Rol del usuario - ya protegido, pero lo hacemos más explícito
+    userRola.value = (resUser?.data?.rola || '').toLowerCase().trim();
+
+    // 2. Ikasleak - protección crítica
+    const ikasleakRaw = Array.isArray(resIkas?.data) ? resIkas.data : [];
+    ikasleak.value = ikasleakRaw.map(i => ({
       ...i,
       name: i.izena || i.name || 'Ikasle Izengabea'
     }));
 
-    const denak = resProd.data;
-
-    // 1. PRODUCTOS FUNGIBLES
-    produktuak.value = denak.filter(p => !p.etiketa || p.etiketa === 'null' || p.etiketa === '');
+    // 3. Produktuak / Materialak - protección doble
+    const produktuakRaw = Array.isArray(resProd?.data) ? resProd.data : [];
     
-    // 2. TRESNERIA + LÓGICA DE ESTADO
-    materialezFungibleak.value = denak.filter(p => p.etiketa && p.etiketa !== 'null' && p.etiketa !== '').map(m => {
-      const mailegua = m.azken_mailegua || m.azkenMailegua || (m.maileguak && m.maileguak[0]) || null;
-      const itzulita = mailegua ? (mailegua.data_itzulera || mailegua.itzuli_data || mailegua.data_itzuli) : null;
-      const estaOcupadoEnAPI = mailegua !== null && (itzulita === null || itzulita === "");
+    // Fungibles
+    produktuak.value = produktuakRaw.filter(p => 
+      !p.etiketa || p.etiketa === 'null' || p.etiketa === ''
+    );
 
-      if (estaOcupadoEnAPI) {
-        bloqueados.value.delete(m.id);
-      }
+    // No fungibles (tresneria) + lógica de estado
+    materialezFungibleak.value = produktuakRaw
+      .filter(p => p.etiketa && p.etiketa !== 'null' && p.etiketa !== '')
+      .map(m => {
+        const mailegua = m.azken_mailegua || m.azkenMailegua || (m.maileguak && m.maileguak[0]) || null;
+        const itzulita = mailegua ? (mailegua.data_itzulera || mailegua.itzuli_data || mailegua.data_itzuli) : null;
+        const estaOcupadoEnAPI = mailegua !== null && (itzulita === null || itzulita === "");
+        
+        if (estaOcupadoEnAPI) {
+          bloqueados.value.delete(m.id);
+        }
+        
+        const bloqueoManual = bloqueados.value.get(m.id);
+        const mostrarRojo = estaOcupadoEnAPI || bloqueoManual;
 
-      const bloqueoManual = bloqueados.value.get(m.id);
-      const mostrarRojo = estaOcupadoEnAPI || bloqueoManual;
+        return {
+          ...m,
+          relacion: estaOcupadoEnAPI ? {
+            ...mailegua,
+            ikaslea: mailegua.ikaslea ? {
+              ...mailegua.ikaslea,
+              name: mailegua.ikaslea.izena || mailegua.ikaslea.name
+            } : null
+          } : (bloqueoManual ? { ikaslea: { name: bloqueoManual.nombre } } : null),
+          libre: !mostrarRojo
+        };
+      });
 
-      // Al retornar la relación, también nos aseguramos de que el nombre del ikasle exista
-      return { 
-        ...m, 
-        relacion: estaOcupadoEnAPI ? {
-          ...mailegua,
-          ikaslea: mailegua.ikaslea ? { 
-            ...mailegua.ikaslea, 
-            name: mailegua.ikaslea.izena || mailegua.ikaslea.name 
-          } : null
-        } : (bloqueoManual ? { ikaslea: { name: bloqueoManual.nombre } } : null), 
-        libre: !mostrarRojo 
-      };
-    });
   } catch (e) {
     console.error("Errorea datuak kargatzean", e);
+    // Fallbacks para que la interfaz no se rompa del todo
+    ikasleak.value = [];
+    produktuak.value = [];
+    materialezFungibleak.value = [];
   } finally {
     loading.value = false;
   }
@@ -92,8 +100,8 @@ const gordeProduktua = async () => {
   
   try {
     // 1. DETERMINAR LA URL CORRECTA
-    // Si el tipo es 'tresneria', usamos '/api/tresnak', si no '/api/produktuak'
-    const url = nuevo.value.tipo === 'tresneria' ? '/api/tresnak' : '/api/produktuak';
+    // Si el tipo es 'tresneria', usamos  '/api/tresnak', si no  '/api/produktuak'
+    const url = nuevo.value.tipo === 'tresneria' ?  '/api/tresnak' :  '/api/produktuak';
 
     const res = await axios.post(url, {
       izena: nuevo.value.izena,
@@ -106,7 +114,7 @@ const gordeProduktua = async () => {
 
     // 2. Lógica de préstamo automático (se mantiene igual)
     if (nuevo.value.tipo === 'tresneria' && nuevo.value.ikasle_id) {
-      await axios.post('/api/maileguak', { 
+      await axios.post('/maileguak', { 
         materiala_id: res.data.id, 
         ikasle_ekipoa_id: nuevo.value.ikasle_id 
       });
@@ -133,7 +141,7 @@ const maileguaHasi = async (id) => {
   if (item) { item.libre = false; item.relacion = { ikaslea: { name: ikasleIzena } }; }
 
   try {
-    await axios.post('/api/maileguak', { materiala_id: id, ikasle_ekipoa_id: selectEl.value });
+    await axios.post('/maileguak', { materiala_id: id, ikasle_ekipoa_id: selectEl.value });
     setTimeout(kargatuDatuak, 1000);
   } catch (error) {
     bloqueados.value.delete(id);

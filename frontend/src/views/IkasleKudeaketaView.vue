@@ -20,7 +20,6 @@ const berria = ref({
 // Configuración Axios
 const token = localStorage.getItem('token');
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 axios.defaults.withCredentials = true; 
 
 if (token) {
@@ -64,7 +63,7 @@ watch(() => route.path, (newPath) => {
 
 const erregistratuIkaslea = async () => {
   try {
-    await axios.post('/api/register', berria.value)
+    await axios.post('/register', berria.value)
     alert("Ikaslea ondo sortu da!")
     erakutsiModala.value = false
     berria.value = { name: '', email: '', password: '', password_confirmation: '', rola: 'ikasle' }

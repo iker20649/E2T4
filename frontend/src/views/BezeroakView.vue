@@ -8,7 +8,6 @@ if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 const bezeroakRaw = ref([])
 const rola = ref('')
 const kargatzen = ref(true)
@@ -17,18 +16,36 @@ const berria = ref({ izena: '', abizenak: '', telefonoa: '', deskribapena: '' })
 const kargatuDatuak = async () => {
   kargatzen.value = true
   try {
+    // 1. Obtener usuario (con mucha protección)
     const userRes = await axios.get('/api/user')
-    rola.value = userRes.data.rola.toLowerCase().trim()
     
+    // Comprobar que existe data y rola antes de acceder
+    const rolaRaw = userRes?.data?.rola
+    
+    if (typeof rolaRaw === 'string') {
+      rola.value = rolaRaw.toLowerCase().trim()
+    } else {
+      rola.value = ''           // valor por defecto seguro
+      console.warn('No se recibió rola válida del servidor', userRes.data)
+    }
+
+    // 2. Cargar bezeroak
     const res = await axios.get('/api/bezeroak')
-    bezeroakRaw.value = res.data
+    
+    // Asegurar que sea array (evita otros errores downstream)
+    bezeroakRaw.value = Array.isArray(res.data) ? res.data : []
+    
   } catch (e) {
     console.error("Errorea datuak kargatzean:", e)
+    rola.value = ''
+    bezeroakRaw.value = []
+    
+    // Opcional: mostrar mensaje al usuario
+    // alert("Ezin izan dira datuak kargatu. Saioa hasi berriro mesedez.")
   } finally {
     kargatzen.value = false
   }
 }
-
 const bezeroZerrenda = computed(() => {
   if (!bezeroakRaw.value) return []
   if (Array.isArray(bezeroakRaw.value)) return bezeroakRaw.value
@@ -41,7 +58,7 @@ const bezeroZerrenda = computed(() => {
 const gordeBezeroa = async () => {
   if (!berria.value.izena) return
   try {
-    await axios.post('/api/bezeroak', berria.value)
+    await axios.post('/bezeroak', berria.value)
     berria.value = { izena: '', abizenak: '', telefonoa: '', deskribapena: '' }
     await kargatuDatuak()
   } catch (e) { 

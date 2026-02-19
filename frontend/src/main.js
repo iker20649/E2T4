@@ -6,7 +6,7 @@ import './assets/main.css'
 
 // AWS IP-a eta portua, /api aurrizkiarekin
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
+axios.defaults.baseURL = '/api';
 
 // API bat denez, hau gehitzea komeni da Laravel-ek JSON espero duela jakiteko
 axios.defaults.headers.common['Accept'] = 'application/json';

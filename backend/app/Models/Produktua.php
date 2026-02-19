@@ -4,6 +4,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 
 class Produktua extends Model {
+    protected $table = "materialas";
     public function maileguak()
 {
     return $this->hasMany(Mailegua::class, 'materiala_id');

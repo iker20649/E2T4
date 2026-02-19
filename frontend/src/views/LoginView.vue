@@ -10,14 +10,13 @@ const error = ref('')
 
 // Konfigurazioa
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 axios.defaults.withCredentials = true;
 
 const login = async () => {
   error.value = ''
   try {
     // 1. Laravelek JSON espero duela ziurtatu
-    const response = await axios.post('/login', {
+    const response = await axios.post('/api/login', {
       email: email.value,
       password: password.value
     }, {

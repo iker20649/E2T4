@@ -1,47 +1,30 @@
 <?php
-
 namespace App\Http\Controllers;
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\ValidationException; // IMPORTANTE: Sin esto da error 500
+use App\Models\User;
 
-class AuthController extends Controller
-{
-    public function login(Request $request)
-    {
-        // 1. Validar datos de entrada
-        $request->validate([
+class AuthController extends Controller {
+    public function login(Request $request) {
+        $credentials = $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
-        // 2. Intentar el login
-        if (Auth::attempt($request->only('email', 'password'))) {
-            $request->session()->regenerate();
-            
+        if (Auth::attempt($credentials)) {
             $user = Auth::user();
-
+            $token = $user->createToken('auth_token')->plainTextToken;
             return response()->json([
+                'access_token' => $token,
+                'token_type' => 'Bearer',
                 'user' => [
+                    'id' => $user->id,
                     'name' => $user->name,
+                    'email' => $user->email,
                     'rola' => $user->rola,
                 ]
             ]);
         }
-
-        // 3. Si falla la contraseña, enviamos el error 422 de forma segura
-        throw ValidationException::withMessages([
-            'email' => ['Kredentzialak ez dira zuzenak.'],
-        ]);
-    }
-
-    public function logout(Request $request)
-    {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        
-        return response()->json(['message' => 'Saioa itxi da']);
+        return response()->json(['message' => 'Credenciales incorrectas'], 401);
     }
 }

@@ -10,17 +10,17 @@ import IkasleKudeaketaView from '../views/IkasleKudeaketaView.vue'
 
 // Configuración de Axios para que coincida con tu backend
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
+axios.defaults.baseURL = '/api';
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     { 
       path: '/', 
-      redirect: '/login' 
+      redirect:  '/api/login' 
     },
     { 
-      path: '/login', 
+      path:  '/api/login', 
       name: 'login', 
       component: LoginView 
     },

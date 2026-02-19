@@ -8,7 +8,6 @@ if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 const hitzorduak = ref([])
 const ikasleak = ref([]) 
 const user = ref(null)
@@ -20,15 +19,15 @@ const kargatuDatuak = async () => {
   kargatzen.value = true
   try {
     const [resUser, resHitz] = await Promise.all([
-      axios.get('/api/user'),
-      axios.get('/api/hitzorduak')
+      axios.get('/user'),
+      axios.get('/hitzorduak')
     ])
     
     user.value = resUser.data
     hitzorduak.value = resHitz.data
 
     if (user.value.rola && user.value.rola.toLowerCase().includes('irakasle')) {
-      const resIkas = await axios.get('/api/admin/ikasleak')
+      const resIkas = await axios.get('/admin/ikasleak')
       ikasleak.value = resIkas.data
     }
   } catch (e) {
@@ -49,7 +48,7 @@ const gordeHitzordua = async () => {
     return
   }
   try {
-    await axios.post('/api/hitzorduak', berria.value)
+    await axios.post('/hitzorduak', berria.value)
     alert("✅ Hitzordua ondo gorde da!")
     berria.value = { bezeroa: '', data: '', deskribapena: '' }
     await kargatuDatuak()

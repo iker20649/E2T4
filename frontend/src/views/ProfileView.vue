@@ -9,13 +9,11 @@ const fitxategia = ref(null)
 
 // AWS IP Helbidea
 // Cambia la IP y el puerto según lo que hayas visto en el paso anterior
-axios.defaults.baseURL = 'http://98.93.71.5';
 axios.defaults.withCredentials = true;
-axios.defaults.baseURL = API_URL;
 
 const kargatu = async () => {
   try {
-    const res = await axios.get('/api/user')
+    const res = await axios.get('/user')
     user.value = res.data
   } catch (e) {
     console.error("Errorea kargatzean", e)
@@ -37,7 +35,7 @@ const gorde = async () => {
   }
 
   try {
-    const res = await axios.post('/api/profile/update', fd, {
+    const res = await axios.post('/profile/update', fd, {
       headers: { 'Content-Type': 'multipart/form-data' }
     })
     
