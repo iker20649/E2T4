@@ -14,7 +14,7 @@ return new class extends Migration
     Schema::create('maileguas', function (Blueprint $table) {
         $table->id();
         $table->foreignId('materiala_id')->constrained('materialas');
-        $table->foreignId('ikaslea_id')->constrained('ikasleas');
+        $table->foreignId('ikaslea_id')->constrained('users');
         $table->dateTime('hasiera');
         $table->dateTime('amaiera')->nullable(); // Itzultzean beteko da
         $table->timestamps();

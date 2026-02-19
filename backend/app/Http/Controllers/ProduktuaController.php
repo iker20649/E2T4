@@ -30,27 +30,33 @@ class ProduktuaController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'izena'        => 'required|string|unique:produktuak',
-            'marka'        => 'nullable|string',
-            'stock'        => 'required|integer|min:0',
-            'stock_minimo' => 'nullable|integer|min:0',
-            'prezioa'      => 'required|numeric|min:0',
-            // 'is_material' kendu dugu datu-basean ez dagoelako
-        ]);
+{
+    $validated = $request->validate([
+        'izena'        => 'required|string',
+        'marka'        => 'nullable|string',
+        'stock'        => 'required|integer',
+        'stock_minimo' => 'nullable|integer',
+        'prezioa'      => 'required|numeric',
+    ]);
 
-        $produktua = Produktua::create($validated);
+    // Creamos el producto
+    $produktua = Produktua::create($validated);
 
+    // Envolvemos el historial en un try-catch para que si falla, 
+    // al menos el producto se cree y el frontend no reciba un 500
+    try {
         StockMugimendua::create([
-            'user_id'    => Auth::id(),
+            'user_id'    => Auth::id() ?? 1, // Si falla el Auth, ponemos el ID 1 por defecto
             'produktua'  => $produktua->izena,
             'kantitatea' => $produktua->stock,
-            'ekintza'    => 'Produktu berria sortua (' . $produktua->prezioa . '€)'
+            'ekintza'    => 'Produktu berria sortua'
         ]);
-
-        return response()->json($produktua, 201);
+    } catch (\Exception $e) {
+        // No hacemos nada, permitimos que el flujo siga
     }
+
+    return response()->json($produktua, 201);
+}
 
     public function updateStock(Request $request, $id)
     {

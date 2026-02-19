@@ -7,7 +7,7 @@ import './assets/main.css'
 
 // --- CONFIGURACIÓN GLOBAL DE AXIOS ---
 // Usamos la IP de tu servidor AWS
-axios.defaults.baseURL = 'http://3.80.72.87';
+axios.defaults.baseURL = 'http://3.88.171.96';
 axios.defaults.withCredentials = false; 
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 

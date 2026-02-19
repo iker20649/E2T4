@@ -1,20 +1,19 @@
 <?php
 
 namespace App\Models;
+
 use Illuminate\Database\Eloquent\Model;
 
-class Produktua extends Model {
-    protected $table = "materialas";
-    public function maileguak()
+class Produktua extends Model
 {
-    return $this->hasMany(Mailegua::class, 'materiala_id');
-}
+    protected $table = 'produktuak'; // ¡Cambiado de materialas a produktuak!
 
-public function azken_mailegua()
-{
-    return $this->hasOne(Mailegua::class, 'materiala_id')->where('itzulita', false)->latest();
-}
-
-// Zutabe berria masiboki kargatzeko baimena eman
-protected $fillable = ['izena', 'marka', 'stock', 'stock_minimo', 'prezioa', 'is_material'];
+    protected $fillable = [
+        'izena', 
+        'marka', 
+        'stock', 
+        'stock_minimo', 
+        'prezioa', 
+        'kategoria_id'
+    ];
 }

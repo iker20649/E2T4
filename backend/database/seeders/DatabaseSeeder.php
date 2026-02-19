@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Materiala;   // <--- AÑADE ESTA LÍNEA
 use App\Models\Taldea;
 use App\Models\Bezeroa;
 use App\Models\Produktua;
@@ -37,11 +38,13 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // 4. Produktua sortu
-        Produktua::create([
-            'izena' => 'Xanpu Loreal 1L',
-            'stock' => 10,
-            'stock_minimo' => 2
-        ]);
+        Materiala::create([
+    'izena' => 'Xanpu Loreal 1L',
+    'stock' => 10,
+    'stock_minimo' => 2,
+    'etiketa' => 'XNP-001', // Añade esto
+    'libre' => 1
+]);
 
         // 5. Hitzordua sortu
         Hitzordua::create([

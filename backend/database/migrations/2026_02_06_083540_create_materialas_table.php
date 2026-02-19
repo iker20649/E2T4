@@ -13,13 +13,15 @@ return new class extends Migration
 {
     Schema::create('materialas', function (Blueprint $table) {
         $table->id();
-        $table->string('izena'); // Secador, Plancha...
-        $table->string('etiketa')->unique(); // Zenbaki bat identifikatzeko
-        $table->boolean('libre')->default(true); // Maileguan dagoen ala ez
+        $table->string('izena');
+        $table->string('etiketa')->unique()->nullable(); // Añade nullable()
+        $table->boolean('libre')->default(true);
+        // AÑADE ESTAS DOS LÍNEAS:
+        $table->integer('stock')->default(0);
+        $table->integer('stock_minimo')->default(0);
         $table->timestamps();
     });
 }
-
     /**
      * Reverse the migrations.
      */
