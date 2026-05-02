@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Produktua extends Model
+class Kategoria extends Model
 {
     use HasFactory, SoftDeletes;
-    protected $table = 'produktuak';
-    protected $fillable = ['izena', 'marka', 'stock', 'stock_minimoa', 'prezioa'];
+    protected $table = 'kategoriak';
+    protected $fillable = ['izena'];
 }

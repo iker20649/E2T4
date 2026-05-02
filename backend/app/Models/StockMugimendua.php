@@ -2,19 +2,18 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory; // Añade esto
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class StockMugimendua extends Model
 {
-    use HasFactory; // Añade esto
-
+    use HasFactory, SoftDeletes;
     protected $table = 'stock_mugimenduak';
-    protected $fillable = ['user_id', 'produktua', 'kantitatea', 'ekintza'];
+    protected $fillable = ['ekipamendu_id', 'kantitatea', 'mota', 'arrazoia'];
 
-    public function user()
+    public function ekipamendua()
     {
-        // Forzamos la ruta completa de la clase para evitar fallos de carga
-        return $this->belongsTo(\App\Models\User::class, 'user_id');
+        return $this->belongsTo(Ekipamendua::class, 'ekipamendu_id');
     }
 }
